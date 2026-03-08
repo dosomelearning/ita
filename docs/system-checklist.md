@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-009`
+Last Issued ID: `T-010`
 
 ## Rules
 
@@ -28,3 +28,4 @@ Last Issued ID: `T-009`
 | T-006 | todo | Backend | Scaffold `b-ms2-detection` with AWS SAM baseline template and module structure. | `b-ms2-detection/README.md`, `docs/tasks/T-006-scaffold-b-ms2-detection-with-sam.md` | Planned; scaffold only, Rekognition flow implemented later |
 | T-007 | todo | Backend | Scaffold `b-ms3-faces` with AWS SAM baseline template and module structure. | `b-ms3-faces/README.md`, `docs/tasks/T-007-scaffold-b-ms3-faces-with-sam.md` | Planned; scaffold only, extraction logic implemented later |
 | T-008 | todo | Backend | Scaffold `b-ms4-statemgr` with AWS SAM baseline template and module structure. | `b-ms4-statemgr/README.md`, `docs/tasks/T-008-scaffold-b-ms4-statemgr-with-sam.md` | Planned; scaffold only, state API logic implemented later |
+| T-010 | todo | Contracts | Define business-level frontend/backend communication patterns and exchange contracts via `MS1` and `MS4`. | `README.md`, `b-ms1-ingress/README.md`, `b-ms4-statemgr/README.md`, `docs/tasks/T-010-define-frontend-backend-exchange-contracts.md` | Planned; focus on business exchange patterns, not implementation detail |
