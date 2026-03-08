@@ -9,7 +9,6 @@ Serverless demo application for classroom-scale photo ingestion and face extract
 ## Related Docs
 
 - [`AGENTS.md`](AGENTS.md) (project working rules)
-- [`TEMP_SESSION_HANDOFF.md`](TEMP_SESSION_HANDOFF.md) (latest session continuity notes)
 - [`docs/README.md`](docs/README.md) (project documentation map)
 - [`docs/system-checklist.md`](docs/system-checklist.md) (system-wide task tracker)
 - [`b-infra/README.md`](b-infra/README.md)
