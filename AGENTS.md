@@ -79,6 +79,13 @@ Global instructions from `/home/raven/.codex/AGENTS.md` are valid unless this fi
 - Follow established project conventions; if none exist, use common standards and state assumptions.
 - Task tracking policy is defined in `docs/tasks/README.md`; follow it for ID issuance, status updates, and backlog handling.
 - On each new user-requested task, add/update the corresponding `T-###` item in `docs/system-checklist.md` per `docs/tasks/README.md`.
+- Commit intent tags are mandatory for task-related commits:
+  - `[checkpoint]` for partial/in-progress synchronization commits.
+  - `[close]` for task-closure commits.
+- A task may be set to `done` only on explicit user instruction.
+- `[checkpoint]` commits are allowed for tasks in `todo`, `in_progress`, or `blocked`; task stays in active backlog.
+- `[close]` commits are allowed only after explicit user instruction to set the task to `done`; closed task must be removed from active backlog in the same commit.
+- All task-related commit messages must reference the relevant `T-###` ID(s).
 - Public-repo privacy rule: never include PII in code, docs, examples, logs, screenshots, task trackers, or commit messages.
 - Do not use private-environment identifiers (usernames, hostnames, local account handles, personal emails, or similar metadata) in repository content.
 - Preserve service boundaries in code and docs:

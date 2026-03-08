@@ -20,16 +20,25 @@ Allowed values:
 - `todo`
 - `in_progress`
 - `blocked`
+- `done`
 
-`done` is not used in the backlog table. Completed items are removed after commit.
+`done` is a controlled transition state and may be set only on explicit user instruction.
 
 ## Workflow
 
 1. On every new requested task, add a backlog row in `docs/system-checklist.md` with the next `T-###` ID and status `todo`.
 2. When implementation starts, switch status to `in_progress`.
 3. If blocked, switch status to `blocked` and add a short blocker note.
-4. After implementation is complete and committed, remove the row from the backlog table.
-5. Include all relevant `T-###` IDs in the commit message body.
+4. When implementation is ready to close, ask user explicitly whether to set the task to `done`.
+5. Only after explicit user instruction, set status to `done`.
+6. Choose commit intent and tag commit subject accordingly:
+   - `[checkpoint]` for partial/in-progress synchronization commits.
+   - `[close]` for closure commits.
+7. Commit requirements:
+   - `[checkpoint]`: task can be `todo`, `in_progress`, or `blocked`; keep task in active backlog.
+   - `[close]`: task must be `done`; remove task row from active backlog in the same commit.
+8. Include all relevant `T-###` IDs in commit message body.
+9. After commit, run `git status` and report remaining changes.
 
 ## Detailed Task Docs
 
