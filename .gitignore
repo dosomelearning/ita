@@ -1,0 +1,63 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.venv/
+venv/
+env/
+
+# Build / package artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# AWS SAM / Cloud tooling
+.aws-sam/
+.serverless/
+
+# Node / frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+.npm/
+.yarn/
+.yarn-cache/
+.next/
+.nuxt/
+.svelte-kit/
+coverage/
+
+# Environment / local config
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs / runtime temp
+*.log
+tmp/
+temp/
+.cache/
