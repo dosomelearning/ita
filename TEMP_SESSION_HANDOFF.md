@@ -56,6 +56,9 @@ Date: 2026-03-08
   - Cross-service dependencies must be via explicit contracts (API/events/storage contracts), not implicit coupling.
 - Canonical repository URL:
   - `https://github.com/dosomelearning/ita` (git remote URL uses `.git` suffix)
+- Git push ownership:
+  - User pushes to remote repositories exclusively.
+  - Agent performs local git operations/commits only with explicit user approval.
 
 ## Architecture / Product Direction
 

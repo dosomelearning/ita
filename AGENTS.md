@@ -89,5 +89,8 @@ Global instructions from `/home/raven/.codex/AGENTS.md` are valid unless this fi
 - Commit message style for this project:
   - Subject line in imperative mood.
   - Multi-line body built with one bullet per logical change and blank lines between bullets.
+- Push workflow:
+  - User pushes to remote repositories exclusively.
+  - Agent may prepare commits and all local git operations only with explicit user approval.
 - Do not commit unless explicitly approved by the user.
 - Read-only git commands are allowed; destructive/history-rewriting commands are not allowed unless explicitly requested.
