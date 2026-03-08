@@ -10,6 +10,8 @@ Serverless demo application for classroom-scale photo ingestion and face extract
 
 - [`AGENTS.md`](AGENTS.md) (project working rules)
 - [`TEMP_SESSION_HANDOFF.md`](TEMP_SESSION_HANDOFF.md) (latest session continuity notes)
+- [`docs/README.md`](docs/README.md) (project documentation map)
+- [`docs/system-checklist.md`](docs/system-checklist.md) (system-wide task tracker)
 - [`b-infra/README.md`](b-infra/README.md)
 - [`b-ms1-ingress/README.md`](b-ms1-ingress/README.md)
 - [`b-ms2-detection/README.md`](b-ms2-detection/README.md)
@@ -35,7 +37,10 @@ Note: in markdown-capable viewers, the module `README.md` entries below are **cl
 
 1. This root `README.md` for system intent and architecture direction.
 2. Diagram(s) in `img/` for current architecture reference.
-3. Module-level `README.md` files for implementation details:
+3. System docs in `docs/` for execution tracking:
+   - [`docs/README.md`](docs/README.md)
+   - [`docs/system-checklist.md`](docs/system-checklist.md)
+4. Module-level `README.md` files for implementation details:
    - [`b-infra/README.md`](b-infra/README.md)
    - [`b-ms1-ingress/README.md`](b-ms1-ingress/README.md)
    - [`b-ms2-detection/README.md`](b-ms2-detection/README.md)
@@ -45,22 +50,65 @@ Note: in markdown-capable viewers, the module `README.md` entries below are **cl
 
 If documentation and diagrams diverge, pause and reconcile before implementation.
 
+## Business Problem and Value
+
+Organizations running short, high-attendance sessions (classes, workshops, bootcamps, events) need a fast way to collect participant photos, process them, and return structured results without building a large custom platform.
+
+This project addresses that need with a low-operations, cloud-native architecture focused on:
+
+- Rapid session onboarding and controlled participant access.
+- Predictable processing under bursty, concurrent uploads.
+- Operational resilience through decoupled service workflow.
+- Clear cost-to-usage alignment for periodic/event-based workloads.
+- Reusable architecture patterns that can be adapted for larger production contexts.
+
+Reference situations where this architecture is applicable:
+
+- Classroom exercises where instructors need near-real-time photo analysis results.
+- Training workshops that include attendance, engagement, or activity scoring from submitted images.
+- Hackathons or short innovation events requiring secure, time-boxed participant upload flows.
+- Corporate learning labs that need temporary, controlled access without full enterprise identity rollout.
+- Pilot programs validating event-driven photo-processing workflows before production-scale investment.
+
+## Academic Use and Data Protection Notice (EU)
+
+This project is for academic research, technical exploration, and architecture problem-solving only. It is not intended for real-world personal data acquisition programs or production identity-processing workflows.
+
+Mandatory handling policy for classroom runs:
+
+- Data collection is limited to the class exercise context and time window.
+- Images and derived face artifacts are not used for any purpose beyond the active class exercise.
+- No collected image data is used for secondary analysis, model training, sharing, or downstream processing after class completion.
+- All collected photos and derived artifacts must be deleted when the class session ends.
+- No photos (originals or derived variants) are retained permanently in any form.
+
+Given the EU context of this project, these constraints are treated as core design requirements, not optional operational preferences.
+
 ## Core Goals
 
-- Demonstrate AWS serverless/managed architecture under concurrent class usage.
+- Demonstrate resilient AWS serverless architecture under concurrent class usage.
 - Accept photo uploads from mobile-first frontend flow.
 - Detect faces with Amazon Rekognition.
 - Extract each detected face into an individual image artifact.
 - Return processed results for frontend consumption.
 - Enable simple class-oriented ranking/leaderboard scenarios (for example, most faces detected in a photo).
 
+## Resilience and Scalability Position
+
+- Resilience is demonstrated through microservice decoupling with SQS-based asynchronous boundaries.
+- Queue-based service separation is intentional architecture, not a classroom shortcut, and it directly supports independent scaling and failure isolation.
+- "Classroom-scale" describes the operating/authentication scope of this demo, not a limit on backend scalability potential.
+- The event-driven design can scale beyond classroom concurrency without changing core service boundaries.
+
 ## Access Model (Current Direction)
 
 - No Cognito authentication in this project.
-- Access is gated by a shared one-time password defined by instructor and stored in DynamoDB.
+- Access is gated by an instructor-defined shared password stored in DynamoDB.
+- The shared password is short-lived: valid only for the duration of a class session and rotated for each class run.
 - Presigned upload URL issuance is allowed only when shared password validation succeeds.
 - Requests with invalid password are rejected before entering protected processing flow.
 - API Gateway endpoints must be rate-limited.
+- Outside an active class window, the system is intended to be operationally non-accessible from the public flow. Exact enforcement controls are tracked as implementation items and are treated as mandatory security requirements, not optional hardening.
 
 ## Repository Layout
 

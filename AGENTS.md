@@ -3,6 +3,10 @@
 These instructions apply to `/home/raven/data/sc/uni/4-ita` and override global defaults only where explicitly stated.
 Global instructions from `/home/raven/.codex/AGENTS.md` are valid unless this file says otherwise.
 
+## Session Start
+- At the beginning of each session, read `docs/tasks/README.md` and `docs/system-checklist.md` before starting work.
+- Treat those files as mandatory working context for task IDs, backlog status, and item lifecycle.
+
 ## Scope and Access
 - Allowed read/write scope without extra approval:
   - `/home/raven/data/sc/uni/4-ita` (this project)
@@ -73,6 +77,10 @@ Global instructions from `/home/raven/.codex/AGENTS.md` are valid unless this fi
 - Keep diffs minimal and focused; avoid unrelated refactors.
 - Prefer explicit naming; avoid magic constants.
 - Follow established project conventions; if none exist, use common standards and state assumptions.
+- Task tracking policy is defined in `docs/tasks/README.md`; follow it for ID issuance, status updates, and backlog handling.
+- On each new user-requested task, add/update the corresponding `T-###` item in `docs/system-checklist.md` per `docs/tasks/README.md`.
+- Public-repo privacy rule: never include PII in code, docs, examples, logs, screenshots, task trackers, or commit messages.
+- Do not use private-environment identifiers (usernames, hostnames, local account handles, personal emails, or similar metadata) in repository content.
 - Preserve service boundaries in code and docs:
   - Do not move service-owned resources into `b-infra`.
   - Do not create hidden runtime coupling between microservices unless explicitly documented and approved.
