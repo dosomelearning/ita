@@ -27,7 +27,7 @@ Allowed values:
 ## Workflow
 
 1. On every new requested task, add a backlog row in `docs/system-checklist.md` with the next `T-###` ID and status `todo`.
-   - In the active backlog table, the `ID` cell must be a clickable markdown link to the task detail file in `docs/tasks/` (for example `[T-014](docs/tasks/T-014-...md)`).
+   - In the active backlog table, the `ID` cell must be a clickable markdown link to the task detail file using path relative to `docs/system-checklist.md` (for example `[T-014](tasks/T-014-...md)`).
 2. When implementation starts, switch status to `in_progress`.
 3. If blocked, switch status to `blocked` and add a short blocker note.
 4. When implementation is ready to close, ask user explicitly whether to set the task to `done`.
@@ -50,5 +50,5 @@ Create a file in `docs/tasks/` only when a backlog item needs deeper design/impl
 - Add `AD Dependencies` when architecture decisions are relevant to the task:
   - List related `AD-###` entries.
   - Add one short line per AD describing implementation impact.
-- Ensure `docs/system-checklist.md` uses a clickable link in the `ID` column that points to this file.
+- Ensure `docs/system-checklist.md` uses a clickable link in the `ID` column that points to this file using `tasks/...` relative path.
 - Keep details concise; backlog remains the operational dashboard

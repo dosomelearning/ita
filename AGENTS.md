@@ -79,7 +79,7 @@ Global instructions from `/home/raven/.codex/AGENTS.md` are valid unless this fi
 - Follow established project conventions; if none exist, use common standards and state assumptions.
 - Task tracking policy is defined in `docs/tasks/README.md`; follow it for ID issuance, status updates, and backlog handling.
 - On each new user-requested task, add/update the corresponding `T-###` item in `docs/system-checklist.md` per `docs/tasks/README.md`.
-- In `docs/system-checklist.md` active backlog rows, keep the `ID` column as clickable links to the corresponding detailed task files in `docs/tasks/`.
+- In `docs/system-checklist.md` active backlog rows, keep the `ID` column as clickable links to the corresponding detailed task files using path relative to `docs/system-checklist.md` (for example `tasks/T-###-...md`).
 - For detailed task files where architecture decisions are relevant, include an `AD Dependencies` section that lists related `AD-###` entries with short implementation-impact notes.
 - Commit intent tags are mandatory for task-related commits:
   - `[checkpoint]` for partial/in-progress synchronization commits.

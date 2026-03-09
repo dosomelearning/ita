@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-014`
+Last Issued ID: `T-015`
 
 ## Rules
 
@@ -18,18 +18,18 @@ Last Issued ID: `T-014`
 - Completion history is tracked in git log and commit messages.
 - Create a detailed task file in `docs/tasks/` only when an item needs more than a short backlog row.
 - When a detailed task file exists and architecture decisions apply, include an `AD Dependencies` section with related `AD-###` entries and short impact notes.
-- In `## Active Items`, keep each task `ID` as a clickable markdown link to its detailed task file in `docs/tasks/`.
+- In `## Active Items`, keep each task `ID` as a clickable markdown link to its detailed task file using a path relative to this file (for example `tasks/T-015-...md`).
 
 ## Active Items
 
 | ID | Status | Area | Task | Links | Notes |
 |---|---|---|---|---|---|
-| [T-003](docs/tasks/T-003-setup-b-infra-shared-stack.md) | todo | Infra | Set up `b-infra` as the first project stack with shared platform resources defined in its CloudFormation template. | `b-infra/README.md`, `docs/tasks/T-003-setup-b-infra-shared-stack.md` | Planned; single processing bucket + prefix layout, S3->SQS upload notification, SNS for system alarms |
-| [T-004](docs/tasks/T-004-setup-f-spa-scaffolding.md) | todo | Frontend | Set up initial frontend scaffolding in existing `f-spa` module. | `f-spa/README.md`, `docs/tasks/T-004-setup-f-spa-scaffolding.md` | Planned; scaffold only, no full feature implementation |
-| [T-005](docs/tasks/T-005-scaffold-b-ms1-ingress-with-sam.md) | todo | Backend | Scaffold `b-ms1-ingress` with AWS SAM baseline template and module structure. | `b-ms1-ingress/README.md`, `docs/tasks/T-005-scaffold-b-ms1-ingress-with-sam.md` | Planned; scaffold only, contracts implemented later |
-| [T-006](docs/tasks/T-006-scaffold-b-ms2-detection-with-sam.md) | todo | Backend | Scaffold `b-ms2-detection` with AWS SAM baseline template and module structure. | `b-ms2-detection/README.md`, `docs/tasks/T-006-scaffold-b-ms2-detection-with-sam.md` | Planned; scaffold only, Rekognition flow implemented later |
-| [T-007](docs/tasks/T-007-scaffold-b-ms3-faces-with-sam.md) | todo | Backend | Scaffold `b-ms3-faces` with AWS SAM baseline template and module structure. | `b-ms3-faces/README.md`, `docs/tasks/T-007-scaffold-b-ms3-faces-with-sam.md` | Planned; scaffold only, extraction logic implemented later |
-| [T-008](docs/tasks/T-008-scaffold-b-ms4-statemgr-with-sam.md) | todo | Backend | Scaffold `b-ms4-statemgr` with AWS SAM baseline template and module structure. | `b-ms4-statemgr/README.md`, `docs/tasks/T-008-scaffold-b-ms4-statemgr-with-sam.md` | Planned; scaffold only, state API logic implemented later |
-| [T-010](docs/tasks/T-010-define-frontend-backend-exchange-contracts.md) | todo | Contracts | Define business-level frontend/backend communication patterns and exchange contracts via `MS1` and `MS4`. | `README.md`, `b-ms1-ingress/README.md`, `b-ms4-statemgr/README.md`, `docs/tasks/T-010-define-frontend-backend-exchange-contracts.md` | Planned; focus on business exchange patterns, not implementation detail |
-| [T-011](docs/tasks/T-011-clarify-architecture-decisions-and-rationale.md) | in_progress | Architecture | Clarify architecture decisions and rationale across system documentation. | `README.md`, `ARCHITECTURE.md`, `docs/README.md`, `b-infra/README.md`, `b-ms1-ingress/README.md`, `b-ms2-detection/README.md`, `b-ms3-faces/README.md`, `b-ms4-statemgr/README.md`, `f-spa/README.md`, `docs/tasks/T-011-clarify-architecture-decisions-and-rationale.md` | In progress; explain key decisions, boundaries, tradeoffs, and documentation placement rationale |
-| [T-013](docs/tasks/T-013-extend-architecture-diagram-with-important-resources.md) | in_progress | Docs | Extend existing architecture diagram to include additional important resources and flows not currently shown clearly. | `img/ita-arch-diag1.png`, `README.md`, `ARCHITECTURE.md`, `docs/tasks/T-013-extend-architecture-diagram-with-important-resources.md` | In progress; prefer extending current diagram for completeness over creating a separate one |
+| [T-003](tasks/T-003-setup-b-infra-shared-stack.md) | todo | Infra | Set up `b-infra` as the first project stack with shared platform resources defined in its CloudFormation template. | `b-infra/README.md`, `tasks/T-003-setup-b-infra-shared-stack.md` | Planned; single processing bucket + prefix layout, S3->SQS upload notification, SNS for system alarms |
+| [T-004](tasks/T-004-setup-f-spa-scaffolding.md) | todo | Frontend | Set up initial frontend scaffolding in existing `f-spa` module. | `f-spa/README.md`, `tasks/T-004-setup-f-spa-scaffolding.md` | Planned; scaffold only, no full feature implementation |
+| [T-005](tasks/T-005-scaffold-b-ms1-ingress-with-sam.md) | todo | Backend | Scaffold `b-ms1-ingress` with AWS SAM baseline template and module structure. | `b-ms1-ingress/README.md`, `tasks/T-005-scaffold-b-ms1-ingress-with-sam.md` | Planned; scaffold only, contracts implemented later |
+| [T-006](tasks/T-006-scaffold-b-ms2-detection-with-sam.md) | todo | Backend | Scaffold `b-ms2-detection` with AWS SAM baseline template and module structure. | `b-ms2-detection/README.md`, `tasks/T-006-scaffold-b-ms2-detection-with-sam.md` | Planned; scaffold only, Rekognition flow implemented later |
+| [T-007](tasks/T-007-scaffold-b-ms3-faces-with-sam.md) | todo | Backend | Scaffold `b-ms3-faces` with AWS SAM baseline template and module structure. | `b-ms3-faces/README.md`, `tasks/T-007-scaffold-b-ms3-faces-with-sam.md` | Planned; scaffold only, extraction logic implemented later |
+| [T-008](tasks/T-008-scaffold-b-ms4-statemgr-with-sam.md) | todo | Backend | Scaffold `b-ms4-statemgr` with AWS SAM baseline template and module structure. | `b-ms4-statemgr/README.md`, `tasks/T-008-scaffold-b-ms4-statemgr-with-sam.md` | Planned; scaffold only, state API logic implemented later |
+| [T-010](tasks/T-010-define-frontend-backend-exchange-contracts.md) | todo | Contracts | Define business-level frontend/backend communication patterns and exchange contracts via `MS1` and `MS4`. | `README.md`, `b-ms1-ingress/README.md`, `b-ms4-statemgr/README.md`, `tasks/T-010-define-frontend-backend-exchange-contracts.md` | Planned; focus on business exchange patterns, not implementation detail |
+| [T-011](tasks/T-011-clarify-architecture-decisions-and-rationale.md) | in_progress | Architecture | Clarify architecture decisions and rationale across system documentation. | `README.md`, `ARCHITECTURE.md`, `docs/README.md`, `b-infra/README.md`, `b-ms1-ingress/README.md`, `b-ms2-detection/README.md`, `b-ms3-faces/README.md`, `b-ms4-statemgr/README.md`, `f-spa/README.md`, `tasks/T-011-clarify-architecture-decisions-and-rationale.md` | In progress; explain key decisions, boundaries, tradeoffs, and documentation placement rationale |
+| [T-013](tasks/T-013-extend-architecture-diagram-with-important-resources.md) | in_progress | Docs | Extend existing architecture diagram to include additional important resources and flows not currently shown clearly. | `img/ita-arch-diag1.png`, `README.md`, `ARCHITECTURE.md`, `tasks/T-013-extend-architecture-diagram-with-important-resources.md` | In progress; prefer extending current diagram for completeness over creating a separate one |
