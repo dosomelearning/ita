@@ -14,6 +14,7 @@ Global instructions from `/home/raven/.codex/AGENTS.md` are valid unless this fi
 - Any access outside those paths (for example `/etc`, `/var`, other home paths) requires explicit user approval first.
 - Never run destructive commands unless explicitly requested.
 - For shell commands, always show the exact command before execution.
+- After filesystem edit batches, run `sync` before reporting completion so IDE-visible file state is refreshed reliably.
 
 ## Environment
 - OS baseline: Fedora 43 (or newer).
