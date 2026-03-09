@@ -1,0 +1,8 @@
+[
+  {"ParameterKey":"HostedZoneId","ParameterValue":"ZXXXXXXXXXXXXXXX"},
+  {"ParameterKey":"DomainName","ParameterValue":"ita.example.com"},
+  {"ParameterKey":"ProjectPrefix","ParameterValue":"ita"},
+  {"ParameterKey":"RandomSuffix","ParameterValue":"pxuzz47kqx"},
+  {"ParameterKey":"AcmCertificateArn","ParameterValue":"arn:aws:acm:us-east-1:111122223333:certificate/00000000-0000-0000-0000-000000000000"},
+  {"ParameterKey":"CostAllocationTagValue","ParameterValue":"ita"}
+]

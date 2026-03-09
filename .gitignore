@@ -56,6 +56,11 @@ coverage/
 !.env.example
 *.local
 
+# Local infra parameter files (keep real account/environment values out of git)
+b-infra/params/*.json
+!b-infra/params/*.example.json
+b-infra/index.test.generated.html
+
 # Logs / runtime temp
 *.log
 tmp/

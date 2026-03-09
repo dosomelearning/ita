@@ -1,0 +1,344 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ita-infra - shared foundational infrastructure for 4-ita
+
+Parameters:
+  HostedZoneId:
+    Type: String
+    Default: "ZXXXXXXXXXXXXXXX"
+    Description: "Existing Route53 hosted zone ID (environment-specific)"
+
+  DomainName:
+    Type: String
+    Default: "ita.example.com"
+    Description: "FQDN for CloudFront-backed frontend endpoint"
+
+  ProjectPrefix:
+    Type: String
+    Default: "ita"
+    Description: "Resource naming prefix"
+
+  RandomSuffix:
+    Type: String
+    Default: "dev001"
+    Description: "Random suffix to reduce global-name collisions"
+
+  AcmCertificateArn:
+    Type: String
+    Default: "arn:aws:acm:us-east-1:111122223333:certificate/00000000-0000-0000-0000-000000000000"
+    Description: "ACM certificate ARN in us-east-1 for CloudFront (environment-specific)"
+
+  CostAllocationTagValue:
+    Type: String
+    Default: "ita"
+    Description: "Tag value used for cost allocation"
+
+Resources:
+  WebHostingBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${ProjectPrefix}-web-${RandomSuffix}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  SharedProcessingBucket:
+    Type: AWS::S3::Bucket
+    DependsOn: UploadedPhotosQueuePolicy
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${ProjectPrefix}-data-${RandomSuffix}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: s3:ObjectCreated:*
+            Queue: !GetAtt UploadedPhotosQueue.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: uploaded/
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  WebHostingBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebHostingBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontReadOnly
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "arn:aws:s3:::${WebHostingBucket}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+
+  AccessLogsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: RetainExceptOnCreate
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${ProjectPrefix}-logs-${RandomSuffix}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: true
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  AccessLogsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AccessLogsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontLogsWrite
+            Effect: Allow
+            Principal:
+              Service: delivery.logs.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub "arn:aws:s3:::${AccessLogsBucket}/cloudfront/*"
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+
+  CloudFrontOac:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${ProjectPrefix}-oac-${RandomSuffix}"
+        Description: "OAC for WebHostingBucket"
+        SigningProtocol: sigv4
+        SigningBehavior: always
+        OriginAccessControlOriginType: s3
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Aliases:
+          - !Ref DomainName
+        Comment: !Sub "${ProjectPrefix} frontend distribution"
+        DefaultRootObject: index.html
+        HttpVersion: http2
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        DefaultCacheBehavior:
+          TargetOriginId: WebHostingS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6"
+          OriginRequestPolicyId: "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
+          Compress: true
+        Origins:
+          - Id: WebHostingS3Origin
+            DomainName: !GetAtt WebHostingBucket.RegionalDomainName
+            S3OriginConfig: {}
+            OriginAccessControlId: !Ref CloudFrontOac
+        Logging:
+          Bucket: !GetAtt AccessLogsBucket.DomainName
+          Prefix: cloudfront/
+          IncludeCookies: false
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponsePagePath: /index.html
+            ResponseCode: 200
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponsePagePath: /index.html
+            ResponseCode: 200
+            ErrorCachingMinTTL: 0
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  AppDnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        HostedZoneId: "Z2FDTNDATAQYW2"
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+
+  UploadedPhotosDlq:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${ProjectPrefix}-uploaded-photos-dlq-${RandomSuffix}"
+      MessageRetentionPeriod: 1209600
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  UploadedPhotosQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${ProjectPrefix}-uploaded-photos-${RandomSuffix}"
+      VisibilityTimeout: 180
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt UploadedPhotosDlq.Arn
+        maxReceiveCount: 5
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  UploadedPhotosQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref UploadedPhotosQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowS3EventNotifications
+            Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt UploadedPhotosQueue.Arn
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+
+  FacesExtractionDlq:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${ProjectPrefix}-faces-extraction-dlq-${RandomSuffix}"
+      MessageRetentionPeriod: 1209600
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  FacesExtractionQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${ProjectPrefix}-faces-extraction-${RandomSuffix}"
+      VisibilityTimeout: 180
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt FacesExtractionDlq.Arn
+        maxReceiveCount: 5
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+  SystemAlarmsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${ProjectPrefix}-system-alarms-${RandomSuffix}"
+      DisplayName: !Sub "${ProjectPrefix} system alarms"
+      Tags:
+        - Key: CostAllocation
+          Value: !Ref CostAllocationTagValue
+
+Outputs:
+  AppUrlCloudFront:
+    Description: "App URL through CloudFront domain"
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-AppUrlCloudFront"
+
+  AppUrlDns:
+    Description: "App URL through Route53 DNS alias"
+    Value: !Sub "https://${DomainName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-AppUrlDns"
+
+  CloudFrontDistributionId:
+    Description: "CloudFront distribution ID"
+    Value: !Ref CloudFrontDistribution
+    Export:
+      Name: !Sub "${AWS::StackName}-CloudFrontDistributionId"
+
+  WebHostingBucketName:
+    Description: "S3 bucket for static SPA hosting"
+    Value: !Ref WebHostingBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-WebHostingBucketName"
+
+  SharedProcessingBucketName:
+    Description: "Shared processing bucket (uploads and processing artifacts)"
+    Value: !Ref SharedProcessingBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-SharedProcessingBucketName"
+
+  AccessLogsBucketName:
+    Description: "Dedicated bucket for CloudFront access logs"
+    Value: !Ref AccessLogsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-AccessLogsBucketName"
+
+  UploadedPhotosQueueArn:
+    Description: "Queue ARN for uploaded photo notifications"
+    Value: !GetAtt UploadedPhotosQueue.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-UploadedPhotosQueueArn"
+
+  UploadedPhotosQueueUrl:
+    Description: "Queue URL for uploaded photo notifications"
+    Value: !Ref UploadedPhotosQueue
+    Export:
+      Name: !Sub "${AWS::StackName}-UploadedPhotosQueueUrl"
+
+  UploadedPhotosDlqArn:
+    Description: "DLQ ARN for uploaded photo notifications"
+    Value: !GetAtt UploadedPhotosDlq.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-UploadedPhotosDlqArn"
+
+  FacesExtractionQueueArn:
+    Description: "Queue ARN for faces extraction jobs"
+    Value: !GetAtt FacesExtractionQueue.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FacesExtractionQueueArn"
+
+  FacesExtractionQueueUrl:
+    Description: "Queue URL for faces extraction jobs"
+    Value: !Ref FacesExtractionQueue
+    Export:
+      Name: !Sub "${AWS::StackName}-FacesExtractionQueueUrl"
+
+  FacesExtractionDlqArn:
+    Description: "DLQ ARN for faces extraction jobs"
+    Value: !GetAtt FacesExtractionDlq.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FacesExtractionDlqArn"
+
+  SystemAlarmsTopicArn:
+    Description: "SNS topic ARN for system alarms"
+    Value: !Ref SystemAlarmsTopic
+    Export:
+      Name: !Sub "${AWS::StackName}-SystemAlarmsTopicArn"
