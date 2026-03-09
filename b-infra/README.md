@@ -150,6 +150,8 @@ aws cloudformation update-stack \
     - `STACK_NAME=ita-infra AWS_PROFILE=dev AWS_REGION=eu-central-1 ./b-infra/scripts/deploy_infra.sh`
   - Deploy a generated test `index.html` and fetch it with curl:
     - `./b-infra/scripts/deploy_test_index.sh`
+  - Initialize shared data-bucket prefix markers (idempotent):
+    - `./b-infra/scripts/init_data_prefixes.sh`
 
 ## Open Decisions
 
