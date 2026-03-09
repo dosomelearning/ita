@@ -1,0 +1,7 @@
+{
+  "scaffold": true,
+  "service": "ms3-faces",
+  "payload": {
+    "example": "event"
+  }
+}

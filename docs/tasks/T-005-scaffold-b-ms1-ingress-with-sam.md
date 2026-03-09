@@ -2,9 +2,9 @@
 
 ## Metadata
 
-- Status: `todo`
+- Status: `done`
 - Created: `2026-03-08`
-- Last Updated: `2026-03-08`
+- Last Updated: `2026-03-09`
 - Related Backlog Item: `T-005`
 - Related Modules: `b-ms1-ingress`, `docs/system-checklist.md`
 
@@ -28,9 +28,9 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- [ ] `b-ms1-ingress` has a baseline SAM scaffold suitable for iterative development.
-- [ ] `b-ms1-ingress/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
-- [ ] Scaffold preserves service ownership boundaries and consumes shared infra via outputs/contracts.
+- [x] `b-ms1-ingress` has a baseline SAM scaffold suitable for iterative development.
+- [x] `b-ms1-ingress/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
+- [x] Scaffold preserves service ownership boundaries and consumes shared infra via outputs/contracts.
 
 ## Implementation Notes
 

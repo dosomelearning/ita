@@ -1,0 +1,7 @@
+{
+  "scaffold": true,
+  "service": "ms2-detection",
+  "payload": {
+    "example": "event"
+  }
+}

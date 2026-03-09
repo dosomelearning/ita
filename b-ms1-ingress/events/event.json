@@ -1,0 +1,7 @@
+{
+  "scaffold": true,
+  "service": "ms1-ingress",
+  "payload": {
+    "example": "event"
+  }
+}

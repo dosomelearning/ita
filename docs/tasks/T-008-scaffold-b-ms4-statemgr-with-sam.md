@@ -2,9 +2,9 @@
 
 ## Metadata
 
-- Status: `todo`
+- Status: `done`
 - Created: `2026-03-08`
-- Last Updated: `2026-03-08`
+- Last Updated: `2026-03-09`
 - Related Backlog Item: `T-008`
 - Related Modules: `b-ms4-statemgr`, `docs/system-checklist.md`
 
@@ -28,9 +28,9 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- [ ] `b-ms4-statemgr` has a baseline SAM scaffold suitable for iterative development.
-- [ ] `b-ms4-statemgr/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
-- [ ] Scaffold preserves service ownership boundaries and avoids hidden coupling.
+- [x] `b-ms4-statemgr` has a baseline SAM scaffold suitable for iterative development.
+- [x] `b-ms4-statemgr/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
+- [x] Scaffold preserves service ownership boundaries and avoids hidden coupling.
 
 ## Implementation Notes
 

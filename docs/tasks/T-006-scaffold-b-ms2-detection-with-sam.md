@@ -2,9 +2,9 @@
 
 ## Metadata
 
-- Status: `todo`
+- Status: `done`
 - Created: `2026-03-08`
-- Last Updated: `2026-03-08`
+- Last Updated: `2026-03-09`
 - Related Backlog Item: `T-006`
 - Related Modules: `b-ms2-detection`, `docs/system-checklist.md`
 
@@ -28,9 +28,9 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- [ ] `b-ms2-detection` has a baseline SAM scaffold suitable for iterative development.
-- [ ] `b-ms2-detection/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
-- [ ] Scaffold aligns with queue-consumer role while preserving shared-resource ownership boundaries.
+- [x] `b-ms2-detection` has a baseline SAM scaffold suitable for iterative development.
+- [x] `b-ms2-detection/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
+- [x] Scaffold aligns with queue-consumer role while preserving shared-resource ownership boundaries.
 
 ## Implementation Notes
 

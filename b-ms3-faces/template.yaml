@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  ita-ms3-faces SAM scaffold.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 10
+    MemorySize: 128
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        LOG_LEVEL: INFO
+        SERVICE_NAME: ms3-faces
+
+Resources:
+  FacesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-faces-handler"
+      CodeUri: src/
+      Handler: main.handler
+
+Outputs:
+  FunctionArn:
+    Description: Lambda ARN for ms3-faces.
+    Value: !GetAtt FacesFunction.Arn
+
+  FunctionName:
+    Description: Lambda name for ms3-faces.
+    Value: !Ref FacesFunction

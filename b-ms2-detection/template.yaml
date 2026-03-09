@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  ita-ms2-detection SAM scaffold.
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 10
+    MemorySize: 128
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        LOG_LEVEL: INFO
+        SERVICE_NAME: ms2-detection
+
+Resources:
+  DetectionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-detection-handler"
+      CodeUri: src/
+      Handler: main.handler
+
+Outputs:
+  FunctionArn:
+    Description: Lambda ARN for ms2-detection.
+    Value: !GetAtt DetectionFunction.Arn
+
+  FunctionName:
+    Description: Lambda name for ms2-detection.
+    Value: !Ref DetectionFunction

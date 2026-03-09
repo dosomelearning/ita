@@ -2,9 +2,9 @@
 
 ## Metadata
 
-- Status: `todo`
+- Status: `done`
 - Created: `2026-03-08`
-- Last Updated: `2026-03-08`
+- Last Updated: `2026-03-09`
 - Related Backlog Item: `T-007`
 - Related Modules: `b-ms3-faces`, `docs/system-checklist.md`
 
@@ -28,9 +28,9 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- [ ] `b-ms3-faces` has a baseline SAM scaffold suitable for iterative development.
-- [ ] `b-ms3-faces/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
-- [ ] Scaffold aligns with queue-consumer role while preserving shared-resource ownership boundaries.
+- [x] `b-ms3-faces` has a baseline SAM scaffold suitable for iterative development.
+- [x] `b-ms3-faces/README.md` documents canonical `install`/`test`/`lint`/`run` commands.
+- [x] Scaffold aligns with queue-consumer role while preserving shared-resource ownership boundaries.
 
 ## Implementation Notes
 

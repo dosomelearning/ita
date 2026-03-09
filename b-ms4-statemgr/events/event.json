@@ -1,0 +1,7 @@
+{
+  "scaffold": true,
+  "service": "ms4-statemgr",
+  "payload": {
+    "example": "event"
+  }
+}
