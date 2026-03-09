@@ -8,6 +8,7 @@ It complements the root [`README.md`](README.md), which remains the architecture
 ![4-ita architecture](img/ita-arch-diag1.png)
 
 Source image: `img/ita-arch-diag1.png`.
+The diagram is intentionally simplified; canonical ownership, contract boundaries, and implementation semantics are defined by the AD entries below.
 
 ## Role of This File
 

@@ -29,6 +29,7 @@ Students use a mobile-first SPA to capture/upload images, backend services proce
 ![4-ita architecture](img/ita-arch-diag1.png)
 
 Source image: `img/ita-arch-diag1.png`.
+For decision rationale, resource ownership semantics, and tradeoffs not fully shown visually, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Working Map (Read This First)
 

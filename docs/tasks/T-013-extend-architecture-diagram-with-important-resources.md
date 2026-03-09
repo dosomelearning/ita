@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Status: `todo`
+- Status: `done`
 - Created: `2026-03-09`
 - Last Updated: `2026-03-09`
 - Related Backlog Item: `T-013`
@@ -39,9 +39,9 @@ Out of scope:
 ## Acceptance Criteria
 
 - [x] `T-013` added to active backlog with correct `T-###` ID sequencing.
-- [ ] Diagram update plan is defined from existing architecture docs/ADs.
-- [ ] Existing diagram is extended (preferred) or a clearly justified alternate produced.
-- [ ] Updated diagram remains consistent with README and `ARCHITECTURE.md` decisions.
+- [x] Diagram update plan is defined from existing architecture docs/ADs.
+- [x] Existing diagram is extended (preferred) or a clearly justified alternate produced.
+- [x] Updated diagram remains consistent with README and `ARCHITECTURE.md` decisions.
 
 ## Implementation Notes
 
@@ -73,3 +73,5 @@ Out of scope:
 ## Change Log
 
 - `2026-03-09` - Initial task file created.
+- `2026-03-09` - Synced status metadata to `in_progress` to match active backlog state.
+- `2026-03-09` - Marked task done after diagram update verification and explicit close instruction.
