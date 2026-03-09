@@ -42,6 +42,7 @@ This split keeps onboarding simple while preserving deeper engineering reasoning
 - [AD-019: Use serverless cloud-native managed AWS architecture as default style](#ad-019-use-serverless-cloud-native-managed-aws-architecture-as-default-style)
 - [AD-020: Use centralized baseline alarms with metric-specific rationale](#ad-020-use-centralized-baseline-alarms-with-metric-specific-rationale)
 - [AD-021: Use shared edge/domain/TLS platform services in `b-infra`](#ad-021-use-shared-edgedomaintls-platform-services-in-b-infra)
+- [AD-022: Use a dedicated S3 bucket for CloudFront access logs](#ad-022-use-a-dedicated-s3-bucket-for-cloudfront-access-logs)
 
 ## Decision Log
 
@@ -331,6 +332,7 @@ Decision:
 - Use a single shared processing S3 bucket for app-processing data.
 - Partition data by strict prefixes (for example `uploads/`, `rekognition/`, `faces/`).
 - Enforce access boundaries with IAM and bucket policies at prefix scope.
+- Keep CloudFront access logs out of this bucket (see `AD-022`).
 
 Why:
 
@@ -341,13 +343,15 @@ Why:
 Alternatives considered:
 
 - Separate S3 bucket per data domain or per service.
-  - Deferred: stronger physical isolation, but more infrastructure and integration complexity for current scope.
+  - Partially adopted:
+    - Processing data remains consolidated in one shared processing bucket.
+    - CloudFront access logs are split into a dedicated logs bucket (`AD-022`) due to logging-specific delivery constraints.
 
 Consequences:
 
 - Positive:
   - Simpler infrastructure surface and deployment coordination.
-  - Centralized baseline controls (encryption, block-public-access, logging, lifecycle policies).
+  - Centralized baseline controls for processing data (encryption, block-public-access, lifecycle policies).
 - Tradeoff:
   - Lower physical isolation than multi-bucket design and larger bucket blast radius.
   - Policy and naming discipline become mandatory to avoid cross-domain access mistakes.
@@ -836,3 +840,39 @@ Consequences:
   - Edge/domain changes are coordinated through shared infra lifecycle.
 - Scope note:
   - This AD is intentionally cumulative and can be refined later with service-level detail for additional shared platform resources.
+
+### AD-022: Use a dedicated S3 bucket for CloudFront access logs
+
+- Status: `accepted`
+- Date: `2026-03-09`
+
+Context:
+
+- CloudFront standard log delivery requires ACL-compatible behavior on the target S3 bucket.
+- The shared processing bucket is intentionally hardened for application data with stricter ACL posture.
+- Combining both concerns in one bucket introduces policy/ownership tension and avoidable risk.
+
+Decision:
+
+- Store CloudFront access logs in a dedicated S3 logs bucket.
+- Keep the processing-data bucket separate and data-only.
+- Apply ACL-compatible settings only to the dedicated logs bucket, not the processing-data bucket.
+
+Why:
+
+- Preserves stricter data-bucket posture for uploaded/processing artifacts.
+- Isolates logging-delivery-specific bucket requirements from application-data controls.
+- Reduces chance that logging requirements weaken data-bucket guardrails over time.
+
+Alternatives considered:
+
+- Store CloudFront logs in the shared processing-data bucket.
+  - Rejected: requires ACL-compatible bucket behavior in the same bucket as application data, increasing policy complexity and risk.
+
+Consequences:
+
+- Positive:
+  - Cleaner security boundary: data bucket and logs bucket have separate hardening profiles.
+  - Easier reasoning about access and retention controls per bucket purpose.
+- Tradeoff:
+  - One additional bucket to manage and output in shared infra.

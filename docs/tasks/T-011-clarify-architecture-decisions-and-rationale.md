@@ -31,7 +31,7 @@ Out of scope:
 
 - `AD-001`: Defines the documentation split (`README.md` overview vs `ARCHITECTURE.md` decision rationale) that this task operationalizes.
 - `AD-002`: Provides service/shared ownership baseline that must remain consistent across architecture rationale updates.
-- `AD-003` to `AD-021`: This task is the source task for documenting and maintaining these architecture decisions coherently in `ARCHITECTURE.md`.
+- `AD-003` to `AD-022`: This task is the source task for documenting and maintaining these architecture decisions coherently in `ARCHITECTURE.md`.
 
 ## Questions Discussed and Reasoning
 
