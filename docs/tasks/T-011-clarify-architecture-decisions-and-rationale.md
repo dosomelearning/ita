@@ -27,6 +27,12 @@ Out of scope:
 - Implementing backend/frontend runtime features.
 - Marking task `T-011` as `done` (requires explicit user instruction).
 
+## AD Dependencies
+
+- `AD-001`: Defines the documentation split (`README.md` overview vs `ARCHITECTURE.md` decision rationale) that this task operationalizes.
+- `AD-002`: Provides service/shared ownership baseline that must remain consistent across architecture rationale updates.
+- `AD-003` to `AD-021`: This task is the source task for documenting and maintaining these architecture decisions coherently in `ARCHITECTURE.md`.
+
 ## Questions Discussed and Reasoning
 
 1. Should we explain architectural decisions directly in `README.md` or create a dedicated file?

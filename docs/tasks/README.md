@@ -46,4 +46,7 @@ Create a file in `docs/tasks/` only when a backlog item needs deeper design/impl
 
 - Naming convention: `T-###-short-kebab-title.md`
 - Must include metadata and `Related Backlog Item: T-###`
+- Add `AD Dependencies` when architecture decisions are relevant to the task:
+  - List related `AD-###` entries.
+  - Add one short line per AD describing implementation impact.
 - Keep details concise; backlog remains the operational dashboard

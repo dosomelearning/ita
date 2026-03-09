@@ -17,6 +17,7 @@ Last Issued ID: `T-013`
 - Commit messages must reference related `T-###` IDs.
 - Completion history is tracked in git log and commit messages.
 - Create a detailed task file in `docs/tasks/` only when an item needs more than a short backlog row.
+- When a detailed task file exists and architecture decisions apply, include an `AD Dependencies` section with related `AD-###` entries and short impact notes.
 
 ## Active Items
 

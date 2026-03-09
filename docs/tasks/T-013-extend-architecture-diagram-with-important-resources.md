@@ -27,6 +27,15 @@ Out of scope:
 - Full visual redesign of the diagram style.
 - Introducing contradictory architecture changes not already documented/approved.
 
+## AD Dependencies
+
+- `AD-009`: Diagram should represent single processing bucket with prefix-level segmentation.
+- `AD-011`: Diagram should show shared password source in SSM Parameter Store for `MS1`.
+- `AD-014`: Diagram should make `CloudFront -> S3` SPA hosting path explicit.
+- `AD-016`: Diagram should include explicit `MS1 -> MS4` upload-init state registration edge.
+- `AD-017`: Diagram should represent centralized queue/DLQ ownership in `b-infra`.
+- `AD-021`: Diagram should consistently reflect shared edge/domain/TLS platform layer (CloudFront, Route53, ACM).
+
 ## Acceptance Criteria
 
 - [x] `T-013` added to active backlog with correct `T-###` ID sequencing.
