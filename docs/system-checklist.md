@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-010`
+Last Issued ID: `T-012`
 
 ## Rules
 
@@ -29,3 +29,4 @@ Last Issued ID: `T-010`
 | T-007 | todo | Backend | Scaffold `b-ms3-faces` with AWS SAM baseline template and module structure. | `b-ms3-faces/README.md`, `docs/tasks/T-007-scaffold-b-ms3-faces-with-sam.md` | Planned; scaffold only, extraction logic implemented later |
 | T-008 | todo | Backend | Scaffold `b-ms4-statemgr` with AWS SAM baseline template and module structure. | `b-ms4-statemgr/README.md`, `docs/tasks/T-008-scaffold-b-ms4-statemgr-with-sam.md` | Planned; scaffold only, state API logic implemented later |
 | T-010 | todo | Contracts | Define business-level frontend/backend communication patterns and exchange contracts via `MS1` and `MS4`. | `README.md`, `b-ms1-ingress/README.md`, `b-ms4-statemgr/README.md`, `docs/tasks/T-010-define-frontend-backend-exchange-contracts.md` | Planned; focus on business exchange patterns, not implementation detail |
+| T-011 | in_progress | Architecture | Clarify architecture decisions and rationale across system documentation. | `README.md`, `ARCHITECTURE.md`, `docs/README.md`, `b-infra/README.md`, `b-ms1-ingress/README.md`, `b-ms2-detection/README.md`, `b-ms3-faces/README.md`, `b-ms4-statemgr/README.md`, `f-spa/README.md`, `docs/tasks/T-011-clarify-architecture-decisions-and-rationale.md` | In progress; explain key decisions, boundaries, tradeoffs, and documentation placement rationale |

@@ -57,7 +57,7 @@ Global instructions from `/home/raven/.codex/AGENTS.md` are valid unless this fi
 - Backend processes photos with Rekognition, extracts faces, and returns face images for frontend use.
 - No Cognito auth in this project.
 - A shared one-time password flow is required:
-  - Instructor-defined shared password stored in DynamoDB.
+  - Instructor-defined shared password stored in SSM Parameter Store.
   - `b-ms1-ingress` issues presigned URL only when password matches.
   - Invalid password requests must be rejected before entering protected flow.
 - All API Gateway endpoints must enforce rate limiting.

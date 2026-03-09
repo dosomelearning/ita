@@ -9,6 +9,7 @@ Serverless demo application for classroom-scale photo ingestion and face extract
 ## Related Docs
 
 - [`AGENTS.md`](AGENTS.md) (project working rules)
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) (architecture decisions and rationale)
 - [`docs/README.md`](docs/README.md) (project documentation map)
 - [`docs/system-checklist.md`](docs/system-checklist.md) (system-wide task tracker)
 - [`b-infra/README.md`](b-infra/README.md)
@@ -102,7 +103,7 @@ Given the EU context of this project, these constraints are treated as core desi
 ## Access Model (Current Direction)
 
 - No Cognito authentication in this project.
-- Access is gated by an instructor-defined shared password stored in DynamoDB.
+- Access is gated by an instructor-defined shared password stored in SSM Parameter Store.
 - The shared password is short-lived: valid only for the duration of a class session and rotated for each class run.
 - Presigned upload URL issuance is allowed only when shared password validation succeeds.
 - Requests with invalid password are rejected before entering protected processing flow.

@@ -24,7 +24,7 @@ Ingress microservice for request admission and upload URL issuance.
 ## Responsibilities
 
 - Define and expose upload-init API endpoint(s) in this service template.
-- Validate instructor-defined shared password (stored in DynamoDB).
+- Validate instructor-defined shared password (stored in SSM Parameter Store).
 - Reject invalid password requests before protected flow.
 - Generate and return S3 presigned URL + upload metadata for accepted requests.
 - Register initial upload state with state manager (or via agreed event/API contract).
@@ -57,4 +57,4 @@ Ingress microservice for request admission and upload URL issuance.
 - Exact API request/response schema for upload-init.
 - Password rotation/update workflow.
 - Correlation ID format shared across downstream services.
-- Final boundary for password table ownership (shared infra vs service-owned table).
+- Password parameter naming/ownership and rotation workflow definition.
