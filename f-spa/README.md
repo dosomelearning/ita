@@ -15,6 +15,7 @@ Frontend single-page application (React + TypeScript), optimized for mobile uplo
 ## Purpose
 
 `f-spa` provides the user experience for photo capture/upload, job tracking, and displaying extracted face results.
+Current scaffold has no business functionality and no authentication wiring.
 
 ## Responsibilities
 
@@ -42,10 +43,13 @@ Frontend single-page application (React + TypeScript), optimized for mobile uplo
 
 ## Commands
 
-- Install: `TBD (document once module tooling is scaffolded)`
-- Test: `TBD`
-- Lint: `TBD`
-- Run: `TBD`
+- Install: `npm install`
+- Test: `npm test`
+- Lint: `npm run lint`
+- Run: `npm run dev`
+- Build: `npm run build`
+- Deploy to S3 web bucket: `./scripts/deploy_spa.sh`
+- Optional deploy overrides: `WEB_BUCKET`, `DISTRIBUTION_ID`, `INFRA_STACK_NAME`, `AWS_PROFILE`, `AWS_REGION`
 
 ## Open Decisions
 

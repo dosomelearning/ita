@@ -2,9 +2,9 @@
 
 ## Metadata
 
-- Status: `todo`
+- Status: `done`
 - Created: `2026-03-08`
-- Last Updated: `2026-03-08`
+- Last Updated: `2026-03-09`
 - Related Backlog Item: `T-004`
 - Related Modules: `f-spa`, `docs/system-checklist.md`
 
@@ -29,9 +29,9 @@ Out of scope:
 
 ## Acceptance Criteria
 
-- [ ] `f-spa` contains an agreed baseline scaffold structure for iterative feature work.
-- [ ] `f-spa/README.md` documents canonical commands for this module.
-- [ ] Scaffold decisions are documented without introducing cross-module coupling.
+- [x] `f-spa` contains an agreed baseline scaffold structure for iterative feature work.
+- [x] `f-spa/README.md` documents canonical commands for this module.
+- [x] Scaffold decisions are documented without introducing cross-module coupling.
 
 ## Implementation Notes
 
@@ -42,12 +42,19 @@ Out of scope:
 ## Validation Evidence
 
 - Command(s) run:
-  - `sed -n '1,220p' docs/system-checklist.md`
+  - `bash -n f-spa/scripts/deploy_spa.sh`
+  - `npm install` (user run)
+  - `./scripts/deploy_spa.sh` (user run)
 - Manual checks:
-  - Confirmed `T-004` backlog item exists and links this task file.
+  - Verified SPA scaffold builds and deploys to web hosting bucket without auth wiring.
+  - Verified deploy script can auto-resolve CloudFront distribution ID from `ita-infra` stack outputs.
+  - Verified TypeScript node-build configuration issue was resolved.
 - Output summary:
-  - Backlog and detailed task entry created.
+  - Initial deployment failed with TypeScript errors (`Set`/`Symbol` unresolved in Vite node types) due to incomplete `tsconfig.node.json`.
+  - Fixed by updating node TS config (`target/lib`, node types, `noEmit`) and adding `@types/node`.
+  - Deployment then completed successfully using default profile `dev` and web bucket `ita-web-pxuzz47kqx`.
 
 ## Change Log
 
 - `2026-03-08` - Initial draft.
+- `2026-03-09` - SPA scaffold implemented, deploy script aligned to infra outputs/defaults, and TypeScript node-config deployment issue documented and resolved.
