@@ -15,7 +15,15 @@ Frontend single-page application (React + TypeScript), optimized for mobile uplo
 ## Purpose
 
 `f-spa` provides the user experience for photo capture/upload, job tracking, and displaying extracted face results.
-Current scaffold has no business functionality and no authentication wiring.
+Current implementation includes frontend-only flow with mock adapters:
+
+- shared code/password entry
+- photo capture from camera
+- selecting an existing photo from device/computer
+- mock submit lifecycle with upload/progress/status states
+- ranking preview and full ranking screen using mock data
+
+Backend endpoint wiring is intentionally deferred.
 
 ## Responsibilities
 
