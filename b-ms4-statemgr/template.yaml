@@ -1,7 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >-
-  ita-ms4-statemgr SAM scaffold.
+  ita-ms4-statemgr state manager service.
+
+Parameters:
+  CloudFrontDomain:
+    Type: String
+    Default: "ita.dosomelearning.com"
+    Description: "CloudFront domain used for frontend-facing artifact URLs."
 
 Globals:
   Function:
@@ -16,14 +22,94 @@ Globals:
         SERVICE_NAME: ms4-statemgr
 
 Resources:
+  StateMgrApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: "$default"
+      Auth:
+        EnableIamAuthorizer: true
+      CorsConfiguration:
+        AllowOrigins:
+          - http://localhost:5173
+          - http://127.0.0.1:5173
+          - https://ita.dosomelearning.com
+        AllowMethods:
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+
+  StateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
+        - AttributeName: gsi1sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: gsi1sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
   StateMgrFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-statemgr-handler"
       CodeUri: src/
       Handler: main.handler
+      Environment:
+        Variables:
+          STATE_TABLE_NAME: !Ref StateTable
+          CLOUDFRONT_DOMAIN: !Ref CloudFrontDomain
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref StateTable
+      Events:
+        InternalInit:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StateMgrApi
+            Path: /internal/uploads/init
+            Method: POST
+            Auth:
+              Authorizer: AWS_IAM
+        InternalEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StateMgrApi
+            Path: /internal/uploads/{uploadId}/events
+            Method: POST
+            Auth:
+              Authorizer: AWS_IAM
+        PublicStatus:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StateMgrApi
+            Path: /v1/uploads/{uploadId}/status
+            Method: GET
 
 Outputs:
+  ApiEndpoint:
+    Description: API endpoint for ms4-statemgr.
+    Value: !Sub "https://${StateMgrApi}.execute-api.${AWS::Region}.amazonaws.com"
+
   FunctionArn:
     Description: Lambda ARN for ms4-statemgr.
     Value: !GetAtt StateMgrFunction.Arn
@@ -31,3 +117,7 @@ Outputs:
   FunctionName:
     Description: Lambda name for ms4-statemgr.
     Value: !Ref StateMgrFunction
+
+  StateTableName:
+    Description: DynamoDB table name for ms4-statemgr state and events.
+    Value: !Ref StateTable

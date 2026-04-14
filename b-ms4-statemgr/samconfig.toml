@@ -17,6 +17,7 @@ confirm_changeset = true
 resolve_s3 = true
 region = "eu-central-1"
 profile = "dev"
+parameter_overrides = "CloudFrontDomain=ita.dosomelearning.com"
 
 [default.package.parameters]
 resolve_s3 = true

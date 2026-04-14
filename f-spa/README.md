@@ -22,8 +22,9 @@ Current implementation includes frontend-only flow with mock adapters:
 - selecting an existing photo from device/computer
 - mock submit lifecycle with upload/progress/status states
 - ranking preview and full ranking screen using mock data
-
-Backend endpoint wiring is intentionally deferred.
+- runtime-selectable state gateway:
+  - `mock` mode for local/dev flow
+  - `ms4` mode for live status polling via `GET /v1/uploads/{uploadId}/status`
 
 ## Responsibilities
 
@@ -65,3 +66,19 @@ Backend endpoint wiring is intentionally deferred.
 - Media capture constraints (file size/type/compression).
 - Polling cadence and frontend caching strategy.
 - Runtime configuration contract for consuming per-environment backend API endpoints.
+
+## Runtime Config (Status Gateway)
+
+Environment variables (Vite):
+
+- `VITE_STATE_GATEWAY_MODE`:
+  - `mock` (default) -> fully mocked state progression.
+  - `ms4` -> poll `MS4` status endpoint for submit lifecycle status.
+- `VITE_MS4_API_BASE_URL`:
+  - Required when `VITE_STATE_GATEWAY_MODE=ms4`.
+  - Example: `https://ita.dosomelearning.com`
+- Starter file: copy values from `.env.example`.
+
+Current scope note:
+
+- Ranking remains mock-backed in both modes until ranking endpoint contract is finalized.

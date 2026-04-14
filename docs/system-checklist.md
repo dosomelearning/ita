@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-021`
+Last Issued ID: `T-022`
 
 ## Rules
 
@@ -30,3 +30,4 @@ Last Issued ID: `T-021`
 | [T-019](tasks/T-019-plan-f-spa-complete-implementation.md) | in_progress | Frontend | Define complete SPA implementation plan (mobile UX, screen flow, state model, test strategy), while deferring concrete backend wiring. | `f-spa/README.md`, `f-spa/docs/planning.md`, `tasks/T-019-plan-f-spa-complete-implementation.md` | In progress; today target = capture/select photo and mock submit flow fully working |
 | [T-020](tasks/T-020-create-end-to-end-process-sequence-diagram.md) | in_progress | Architecture | Create end-to-end process sequence documentation and diagram for the classroom photo flow in proper runtime order. | `README.md`, `ARCHITECTURE.md`, `f-spa/README.md`, `docs/process/photo-upload-processing-sequence.md`, `img/ita-photo-flow-sequence.mmd`, `tasks/T-020-create-end-to-end-process-sequence-diagram.md` | In progress; diagram source is versioned in `img/` and embedded in process doc |
 | [T-021](tasks/T-021-add-stack-status-helper-scripts.md) | in_progress | Operations | Add per-stack helper scripts to inspect CloudFormation stack status/content in dev account. | `scripts/cfn_stack_report.sh`, `scripts/describe_ita_infra_stack.sh`, `scripts/describe_ita_ms1_ingress_stack.sh`, `scripts/describe_ita_ms2_detection_stack.sh`, `scripts/describe_ita_ms3_faces_stack.sh`, `scripts/describe_ita_ms4_statemgr_stack.sh`, `scripts/README.md`, `tasks/T-021-add-stack-status-helper-scripts.md` | In progress; one wrapper script per stack calling shared report logic |
+| [T-022](tasks/T-022-wire-f-spa-status-polling-to-ms4.md) | in_progress | Frontend | Wire SPA processing-status retrieval to `MS4` status API with runtime-configured gateway selection and safe fallback behavior. | `f-spa/src/App.tsx`, `f-spa/src/stateGateway.ts`, `f-spa/src/mockGateways.ts`, `f-spa/src/mockGateways.test.ts`, `f-spa/src/stateGateway.test.ts`, `f-spa/README.md`, `tasks/T-022-wire-f-spa-status-polling-to-ms4.md` | In progress; use env-driven MS4 polling mode while retaining mock mode for local/dev |

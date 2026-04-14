@@ -1,18 +1,24 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
   MockAuthGateway,
-  MockStateGateway,
   MockUploadGateway,
   type JobPhase,
   type RankingEntry,
 } from "./mockGateways";
+import { createStateGateway, type StateGateway } from "./stateGateway";
 
 type View = "home" | "submit" | "ranking";
 type SubmitStatus = "idle" | "validating" | "submitting" | "success" | "failure";
 
 const authGateway = new MockAuthGateway();
 const uploadGateway = new MockUploadGateway();
-const stateGateway = new MockStateGateway();
+const stateGateway = createStateGateway();
+
+function supportsFailureSimulation(
+  gateway: StateGateway
+): gateway is StateGateway & { setFailNext: (shouldFail: boolean) => void } {
+  return "setFailNext" in gateway && typeof gateway.setFailNext === "function";
+}
 
 function createInitialJobPhases(): Record<JobPhase, boolean> {
   return {
@@ -74,6 +80,8 @@ function App() {
 
   const hasCredentials = password.trim().length > 0 && nickname.trim().length > 0;
   const canSubmit = selectedFile !== null && hasCredentials;
+  const canSimulateFailure = supportsFailureSimulation(stateGateway);
+  const gatewayDebug = stateGateway.getDebugInfo?.() ?? { mode: "unknown" };
 
   function resetSubmitState() {
     setSubmitStatus("idle");
@@ -147,7 +155,9 @@ function App() {
     setJobPhases(createInitialJobPhases());
 
     try {
-      stateGateway.setFailNext(forceFailureNextSubmit);
+      if (supportsFailureSimulation(stateGateway)) {
+        stateGateway.setFailNext(forceFailureNextSubmit);
+      }
 
       const initResult = await authGateway.initUploadSession(password.trim());
       if (!initResult.accepted) {
@@ -313,22 +323,28 @@ function App() {
             </div>
 
             <button className="btn btn-primary btn-block" type="button" disabled={!canSubmit} onClick={onSubmitPhoto}>
-              Mock Submit
+              Submit
             </button>
 
-            <label className="checkbox-row" htmlFor="force-failure">
-              <input
-                id="force-failure"
-                type="checkbox"
-                checked={forceFailureNextSubmit}
-                onChange={(event) => setForceFailureNextSubmit(event.target.checked)}
-              />
-              Simulate failure on next submit
-            </label>
+            {canSimulateFailure && (
+              <label className="checkbox-row" htmlFor="force-failure">
+                <input
+                  id="force-failure"
+                  type="checkbox"
+                  checked={forceFailureNextSubmit}
+                  onChange={(event) => setForceFailureNextSubmit(event.target.checked)}
+                />
+                Simulate failure on next submit
+              </label>
+            )}
 
             <section className="status-panel">
               <h3>Status</h3>
               <p className={`status status-${submitStatus}`}>{submitMessage}</p>
+              <p className="muted">
+                Gateway: {gatewayDebug.mode}
+                {gatewayDebug.mode === "ms4" && gatewayDebug.baseUrl ? ` (${gatewayDebug.baseUrl})` : ""}
+              </p>
               <p className="muted">Upload progress: {uploadProgress}%</p>
               <ul className="phase-list">
                 <li className={jobPhases.queued ? "active" : ""}>Queued</li>

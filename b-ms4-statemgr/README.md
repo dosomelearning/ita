@@ -214,6 +214,7 @@ Each write/read path should log:
 
 - Install: `conda run -n conda_py_env_312 python -m pip install -r src/requirements.txt -r tests/requirements.txt`
 - Test: `./scripts/run_tests.sh`
+- Integration test: `MS4_API_BASE_URL=<api-url> ./scripts/run_integration_tests.sh`
 - Lint: `conda run -n conda_py_env_312 python -m ruff check src tests`
 - Run: `sam build --template-file template.yaml`
 
