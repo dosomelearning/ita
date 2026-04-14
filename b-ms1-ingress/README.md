@@ -30,6 +30,147 @@ Ingress microservice for request admission and upload URL issuance.
 - Register initial upload state with state manager (or via agreed event/API contract).
 - Emit structured logs and metrics for admission outcomes.
 
+## Functional Specification (Pre-Implementation)
+
+The sections below define the first implementation target for `MS1`.
+
+### API Endpoint (Initial)
+
+- Frontend upload-init endpoint:
+  - `POST /v1/uploads/init`
+  - Purpose: password-gated admission and upload target issuance.
+  - Caller: SPA.
+  - Rate-limited at API Gateway (mandatory).
+
+### Request Contract (Business-Level)
+
+Required fields:
+
+- `password` (shared class password)
+- `nickname` (frontend user nickname for session context)
+- `sessionId` (class/session correlation identifier)
+- `contentType` (image media type, for example `image/jpeg`)
+
+Optional fields:
+
+- `originalFilename`
+- `fileSizeBytes`
+
+Validation baseline:
+
+- `password`, `nickname`, `sessionId`, `contentType` must be non-empty strings.
+- Reject unsupported content types with explicit validation error.
+
+### Admission and Password Validation
+
+- Password source is SSM Parameter Store (configured by env var parameter name).
+- `MS1` reads configured shared password and performs constant-time compare with request password.
+- Invalid password handling:
+  - No presigned URL generation.
+  - No `MS4` init call.
+  - Return explicit auth failure response.
+
+### Upload Target and Presigned URL
+
+On successful admission:
+
+- Generate `uploadId` in `MS1`.
+- Build canonical object key under shared processing bucket:
+  - Prefix: `uploaded/`
+  - Include `sessionId` and `uploadId` in key path.
+- Generate presigned `PUT` URL with bounded expiry.
+- Include required upload headers in response (`Content-Type` and any required metadata headers).
+
+Note:
+
+- Queue message is not emitted by `MS1` directly.
+- Downstream message to uploaded queue is produced by S3 event configuration after successful object upload.
+
+### Mandatory Sync Registration in MS4
+
+Before returning success to SPA, `MS1` must call:
+
+- `POST /internal/uploads/init` on `MS4` (AWS_IAM-authenticated internal call).
+
+Init payload baseline:
+
+- `uploadId`
+- `sessionId`
+- `submittedAt` (ISO 8601)
+- `source` (`spa`)
+- `nickname` (forwarded as optional metadata field)
+
+Consistency rule:
+
+- If `MS4` init registration fails, `MS1` must fail the request (retriable error), and must not return a success upload-init response.
+
+### Success Response Contract
+
+Response baseline fields:
+
+- `accepted: true`
+- `uploadId`
+- `uploadUrl` (presigned URL)
+- `uploadMethod` (`PUT`)
+- `uploadHeaders` (required request headers)
+- `objectKey`
+- `expiresInSeconds`
+
+### Error Semantics and Envelope
+
+Use standardized envelope shape:
+
+- `error.code`
+- `error.message`
+- `error.retryable`
+- `error.details` (optional, non-sensitive)
+- `requestId`
+- `timestamp`
+
+Status-to-code baseline:
+
+- `400` -> `VALIDATION_ERROR`
+- `401` or `403` -> `INVALID_PASSWORD`
+- `429` -> `THROTTLED`
+- `503` -> `DEPENDENCY_UNAVAILABLE` (for `MS4`/SSM transient failures)
+- `500` -> `INTERNAL_ERROR`
+
+Rules:
+
+- Never log plaintext password.
+- Keep frontend-facing error messages user-safe and actionable.
+
+### Idempotency and Retry Guidance
+
+- Default behavior: each accepted call creates a new `uploadId`.
+- Client retries after uncertain failures are allowed and may create new uploads unless client-supplied idempotency is introduced later.
+- If `MS4` registration fails, response must be retryable and no successful init outcome should be emitted.
+
+### Required Infra Inputs
+
+From shared infra outputs/config:
+
+- `SharedProcessingBucketName`
+- Region and signing context for presign generation
+
+From service config:
+
+- `SharedPasswordSsmParameterName`
+- `MS4InternalApiBaseUrl`
+
+### Observability Baseline
+
+Log fields per request:
+
+- `requestId`
+- `uploadId` (once generated)
+- `sessionId`
+- `nickname` (if policy permits; otherwise hashed/pseudonymized)
+- admission decision (`accepted` / `rejected`)
+- rejection reason code
+- `MS4` registration outcome
+- presign generation outcome
+
 ## Inbound / Outbound Contracts
 
 - Inbound:
@@ -52,9 +193,21 @@ Ingress microservice for request admission and upload URL issuance.
 - Lint: `conda run -n conda_py_env_312 python -m ruff check src tests`
 - Run: `sam build --template-file template.yaml`
 
+## Deployment Parameters
+
+`MS1` template parameters are configured in `b-ms1-ingress/samconfig.toml` under:
+
+- `[default.deploy.parameters].parameter_overrides`
+
+Current overrides include:
+
+- `ProcessingBucketName`
+- `SharedPasswordSsmParameterName`
+- `Ms4InternalApiBaseUrl`
+- `PresignExpiresSeconds`
+
 ## Open Decisions
 
-- Exact API request/response schema for upload-init.
-- Password rotation/update workflow.
+- Password rotation/update workflow and class-session lifecycle governance.
 - Correlation ID format shared across downstream services.
-- Password parameter naming/ownership and rotation workflow definition.
+- Client-side idempotency key introduction strategy for duplicate-submit control.

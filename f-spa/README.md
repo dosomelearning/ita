@@ -71,6 +71,13 @@ Current implementation includes frontend-only flow with mock adapters:
 
 Environment variables (Vite):
 
+- `VITE_INGRESS_GATEWAY_MODE`:
+  - `mock` (default) -> mock upload-init + mock upload transport.
+  - `ms1` -> call `MS1` upload-init endpoint and upload to returned presigned URL.
+- `VITE_MS1_API_BASE_URL`:
+  - Required when `VITE_INGRESS_GATEWAY_MODE=ms1`.
+  - Example: `https://si01n8xiyc.execute-api.eu-central-1.amazonaws.com`
+
 - `VITE_STATE_GATEWAY_MODE`:
   - `mock` (default) -> fully mocked state progression.
   - `ms4` -> poll `MS4` status endpoint for submit lifecycle status.

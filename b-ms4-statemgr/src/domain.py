@@ -29,6 +29,8 @@ class DomainError(Exception):
 class InitRequest:
     upload_id: str
     session_id: str
+    nickname: str
+    participant_id: str
     submitted_at: str
     source: str
 
@@ -72,6 +74,7 @@ def parse_iso8601(value: str) -> str:
 def validate_init_payload(payload: dict[str, Any]) -> InitRequest:
     upload_id = _required_string(payload, "uploadId")
     session_id = _required_string(payload, "sessionId")
+    nickname = _required_string(payload, "nickname")
     submitted_at = parse_iso8601(_required_string(payload, "submittedAt"))
     source = _required_string(payload, "source")
     if source != "spa":
@@ -81,7 +84,14 @@ def validate_init_payload(payload: dict[str, Any]) -> InitRequest:
             status_code=400,
             details={"source": source},
         )
-    return InitRequest(upload_id=upload_id, session_id=session_id, submitted_at=submitted_at, source=source)
+    return InitRequest(
+        upload_id=upload_id,
+        session_id=session_id,
+        nickname=nickname,
+        participant_id=build_participant_id(nickname),
+        submitted_at=submitted_at,
+        source=source,
+    )
 
 
 def validate_event_payload(upload_id: str, payload: dict[str, Any]) -> EventRequest:
@@ -156,6 +166,18 @@ def assert_transition_allowed(current_status: str, next_status: str) -> None:
 
 def build_event_sk(event_time: str, event_type: str, producer: str) -> str:
     return f"EVENT#{event_time}#{event_type}#{producer}"
+
+
+def build_participant_id(nickname: str) -> str:
+    normalized = " ".join(nickname.strip().lower().split())
+    if not normalized:
+        raise DomainError(
+            code="VALIDATION_ERROR",
+            message="nickname is required and must be a non-empty string.",
+            status_code=400,
+            details={"field": "nickname"},
+        )
+    return normalized
 
 
 def _required_string(payload: dict[str, Any], field: str) -> str:

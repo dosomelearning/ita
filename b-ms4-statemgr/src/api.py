@@ -4,6 +4,7 @@ import json
 import logging
 import re
 from typing import Any
+from urllib.parse import unquote
 
 try:  # Lambda runtime import path
     from domain import DomainError, utc_now_iso
@@ -15,6 +16,9 @@ except ImportError:  # Unit tests/package import path
 LOGGER = logging.getLogger(__name__)
 UPLOAD_STATUS_PATH_RE = re.compile(r"^/v1/uploads/(?P<upload_id>[^/]+)/status$")
 UPLOAD_EVENT_PATH_RE = re.compile(r"^/internal/uploads/(?P<upload_id>[^/]+)/events$")
+PARTICIPANT_UPLOADS_PATH_RE = re.compile(
+    r"^/v1/sessions/(?P<session_id>[^/]+)/participants/(?P<nickname>[^/]+)/uploads$"
+)
 
 
 class Ms4Api:
@@ -45,6 +49,17 @@ class Ms4Api:
                 if match:
                     upload_id = match.group("upload_id")
                     result = self._service.get_status(upload_id)
+                    return _ok(200, result)
+                match = PARTICIPANT_UPLOADS_PATH_RE.match(path)
+                if match:
+                    session_id = unquote(match.group("session_id"))
+                    nickname = unquote(match.group("nickname"))
+                    limit = _read_limit(event)
+                    result = self._service.get_participant_uploads(
+                        session_id=session_id,
+                        nickname=nickname,
+                        limit=limit,
+                    )
                     return _ok(200, result)
 
             raise DomainError(
@@ -142,6 +157,42 @@ def _ok(status_code: int, payload: dict[str, Any]) -> dict[str, Any]:
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps(payload),
     }
+
+
+def _read_limit(event: dict[str, Any]) -> int:
+    query = event.get("queryStringParameters")
+    if not isinstance(query, dict):
+        return 20
+    raw_limit = query.get("limit")
+    if raw_limit is None:
+        return 20
+    if not isinstance(raw_limit, str) or not raw_limit.strip():
+        raise DomainError(
+            code="VALIDATION_ERROR",
+            message="limit must be a positive integer.",
+            status_code=400,
+            retryable=False,
+            details={"field": "limit"},
+        )
+    try:
+        parsed = int(raw_limit)
+    except ValueError as exc:
+        raise DomainError(
+            code="VALIDATION_ERROR",
+            message="limit must be a positive integer.",
+            status_code=400,
+            retryable=False,
+            details={"field": "limit", "value": raw_limit},
+        ) from exc
+    if parsed < 1:
+        raise DomainError(
+            code="VALIDATION_ERROR",
+            message="limit must be a positive integer.",
+            status_code=400,
+            retryable=False,
+            details={"field": "limit", "value": raw_limit},
+        )
+    return parsed
 
 
 def _error_response(err: DomainError, *, request_id: str) -> dict[str, Any]:

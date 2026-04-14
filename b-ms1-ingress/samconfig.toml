@@ -17,6 +17,7 @@ confirm_changeset = true
 resolve_s3 = true
 region = "eu-central-1"
 profile = "dev"
+parameter_overrides = "ProcessingBucketName=ita-data-pxuzz47kqx SharedPasswordSsmParameterName=/ita/class/shared-password Ms4InternalApiBaseUrl=https://90zby48wa9.execute-api.eu-central-1.amazonaws.com PresignExpiresSeconds=900"
 
 [default.package.parameters]
 resolve_s3 = true

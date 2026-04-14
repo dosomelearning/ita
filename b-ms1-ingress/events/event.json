@@ -1,7 +1,17 @@
 {
-  "scaffold": true,
-  "service": "ms1-ingress",
-  "payload": {
-    "example": "event"
-  }
+  "version": "2.0",
+  "routeKey": "POST /v1/uploads/init",
+  "rawPath": "/v1/uploads/init",
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "path": "/v1/uploads/init"
+    },
+    "requestId": "example-request-id"
+  },
+  "headers": {
+    "content-type": "application/json"
+  },
+  "body": "{\"password\":\"class2026\",\"nickname\":\"ava\",\"sessionId\":\"class-2026-04-14\",\"contentType\":\"image/jpeg\"}",
+  "isBase64Encoded": false
 }

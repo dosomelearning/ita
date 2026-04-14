@@ -141,6 +141,7 @@ Initial route set:
 - `POST /internal/uploads/init`
 - `POST /internal/uploads/{uploadId}/events`
 - `GET /v1/uploads/{uploadId}/status`
+- `GET /v1/sessions/{sessionId}/participants/{nickname}/uploads`
 
 Implementation guardrail:
 
@@ -152,6 +153,7 @@ Upload-init write (`POST /internal/uploads/init`) required fields:
 
 - `uploadId` (string, globally unique within environment)
 - `sessionId` (string, class run/session correlation)
+- `nickname` (participant display name; normalized by MS4 for participant history keying)
 - `submittedAt` (ISO 8601 timestamp)
 - `source` (enum-like string; currently `spa`)
 
@@ -171,6 +173,13 @@ Frontend status read (`GET /v1/uploads/{uploadId}/status`) response fields:
 - `progress` (optional object with stage hints)
 - `results` (optional object; for `completed`, includes face artifact refs/metadata)
 - `error` (optional object; for `failed`, includes user-safe reason and retry hint)
+
+Frontend participant history read (`GET /v1/sessions/{sessionId}/participants/{nickname}/uploads`) response fields:
+
+- `sessionId`
+- `nickname`
+- `participantId` (normalized identity key)
+- `items` (status-read projection list, newest first)
 
 ### 4.1) Result Reference Format Decision
 
@@ -291,6 +300,7 @@ Per-request/event logs should include:
   - Verified spec aligns with architecture decisions and process sequence.
 - Output summary:
   - Added contract-first `MS4` functionality specification and business-level API/state rules.
+  - `MS1` implementation-ready contract details are tracked in `T-023`.
 
 ## Change Log
 

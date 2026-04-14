@@ -1,7 +1,24 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >-
-  ita-ms1-ingress SAM scaffold.
+  ita-ms1-ingress upload-init service.
+
+Parameters:
+  ProcessingBucketName:
+    Type: String
+    Description: Shared processing bucket name for upload targets.
+  SharedPasswordSsmParameterName:
+    Type: String
+    Description: SSM parameter name containing shared class password.
+  Ms4InternalApiBaseUrl:
+    Type: String
+    Description: Base URL for MS4 internal API.
+  PresignExpiresSeconds:
+    Type: Number
+    Default: 900
+    MinValue: 60
+    MaxValue: 3600
+    Description: Expiration time (seconds) for presigned PUT URL.
 
 Globals:
   Function:
@@ -16,14 +33,62 @@ Globals:
         SERVICE_NAME: ms1-ingress
 
 Resources:
+  IngressApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: "$default"
+      CorsConfiguration:
+        AllowOrigins:
+          - http://localhost:5173
+          - http://127.0.0.1:5173
+          - https://ita.dosomelearning.com
+        AllowMethods:
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
   IngressFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-ingress-handler"
       CodeUri: src/
       Handler: main.handler
+      Environment:
+        Variables:
+          SHARED_PASSWORD_SSM_PARAM: !Ref SharedPasswordSsmParameterName
+          PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
+          MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+          PRESIGN_EXPIRES_SECONDS: !Ref PresignExpiresSeconds
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParameter
+              Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SharedPasswordSsmParameterName}"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/uploaded/*"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - execute-api:Invoke
+              Resource: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*/POST/internal/uploads/init"
+      Events:
+        UploadInit:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref IngressApi
+            Path: /v1/uploads/init
+            Method: POST
 
 Outputs:
+  ApiEndpoint:
+    Description: API endpoint for ms1-ingress.
+    Value: !Sub "https://${IngressApi}.execute-api.${AWS::Region}.amazonaws.com"
+
   FunctionArn:
     Description: Lambda ARN for ms1-ingress.
     Value: !GetAtt IngressFunction.Arn

@@ -46,6 +46,9 @@ The sections below define the implementation target for the first MS4 delivery s
 - Frontend status read:
   - `GET /v1/uploads/{uploadId}/status`
   - Purpose: polling/read model for SPA async workflow UI.
+- Frontend participant history read:
+  - `GET /v1/sessions/{sessionId}/participants/{nickname}/uploads`
+  - Purpose: fetch participant upload history for session-scoped UI and ranking foundations.
 
 ### Internal API Authentication
 
@@ -64,6 +67,7 @@ The sections below define the implementation target for the first MS4 delivery s
   - `POST /internal/uploads/init`
   - `POST /internal/uploads/{uploadId}/events`
   - `GET /v1/uploads/{uploadId}/status`
+  - `GET /v1/sessions/{sessionId}/participants/{nickname}/uploads`
 - Keep internal and frontend route handlers logically separated to prevent policy leakage.
 
 ### Canonical State Machine
@@ -94,6 +98,7 @@ Init write required fields:
 
 - `uploadId`
 - `sessionId`
+- `nickname`
 - `submittedAt` (ISO 8601)
 - `source` (`spa`)
 
@@ -113,6 +118,13 @@ Status read response fields:
 - `progress` (optional)
 - `results` (optional; populated for `completed`)
 - `error` (optional; populated for `failed`)
+
+Participant history response fields:
+
+- `sessionId`
+- `nickname`
+- `participantId`
+- `items` (array of status-read-shape objects)
 
 ### Result Reference Format
 
@@ -177,6 +189,12 @@ Current implementation direction:
 - `PK = UPLOAD#<uploadId>`.
 - `SK = STATE` for current read projection.
 - `SK = EVENT#<eventTime>#<eventType>#<producer>` for immutable event history.
+- `GSI1` supports session-oriented query patterns.
+- `GSI2` supports participant history query:
+  - `gsi2pk = PARTICIPANT#<sessionId>#<participantId>`
+  - `gsi2sk = SUBMITTED#<submittedAt>#UPLOAD#<uploadId>`
+  - Intent: session-scoped participant history (class session boundary).
+  - Consequence: same participant across multiple sessions is intentionally separated.
 
 Mandatory runtime access constraint:
 
@@ -222,3 +240,8 @@ Each write/read path should log:
 
 - Leaderboard aggregation model and refresh strategy.
 - State table ownership split (service-owned by MS4 vs explicitly shared table in `b-infra`).
+- Global participant history across sessions:
+  - If needed, add a dedicated index (for example `GSI3`) with:
+    - `gsi3pk = PARTICIPANT#<participantId>`
+    - `gsi3sk = SESSION#<sessionId>#SUBMITTED#<submittedAt>#UPLOAD#<uploadId>`
+  - Keep `GSI2` as session-scoped read model for in-session ranking and user history.

@@ -9,6 +9,7 @@ try:  # Lambda runtime import path
         InitRequest,
         assert_transition_allowed,
         build_event_sk,
+        build_participant_id,
         utc_now_iso,
         validate_event_payload,
         validate_init_payload,
@@ -21,6 +22,7 @@ except ImportError:  # Unit tests/package import path
         InitRequest,
         assert_transition_allowed,
         build_event_sk,
+        build_participant_id,
         utc_now_iso,
         validate_event_payload,
         validate_init_payload,
@@ -54,6 +56,8 @@ class StateService:
             "entityType": "STATE",
             "uploadId": req.upload_id,
             "sessionId": req.session_id,
+            "nickname": req.nickname,
+            "participantId": req.participant_id,
             "source": req.source,
             "status": "queued",
             "submittedAt": req.submitted_at,
@@ -65,6 +69,8 @@ class StateService:
             "lastEventKey": "INIT",
             "gsi1pk": f"SESSION#{req.session_id}",
             "gsi1sk": f"UPDATED#{now}#UPLOAD#{req.upload_id}",
+            "gsi2pk": f"PARTICIPANT#{req.session_id}#{req.participant_id}",
+            "gsi2sk": f"SUBMITTED#{req.submitted_at}#UPLOAD#{req.upload_id}",
         }
         self._repository.create_initial_state(upload_id=req.upload_id, item=state_item)
         return self._to_status_response(state_item)
@@ -107,6 +113,21 @@ class StateService:
                 details={"uploadId": upload_id},
             )
         return self._to_status_response(state)
+
+    def get_participant_uploads(self, *, session_id: str, nickname: str, limit: int = 20) -> dict[str, Any]:
+        participant_id = build_participant_id(nickname)
+        safe_limit = min(max(limit, 1), 50)
+        items = self._repository.list_participant_states(
+            session_id=session_id,
+            participant_id=participant_id,
+            limit=safe_limit,
+        )
+        return {
+            "sessionId": session_id,
+            "nickname": nickname,
+            "participantId": participant_id,
+            "items": [self._to_status_response(item) for item in items],
+        }
 
     def _build_next_state(self, *, state: dict[str, Any], event: EventRequest, event_sk: str) -> dict[str, Any]:
         next_state = dict(state)
@@ -167,6 +188,8 @@ class StateService:
         return (
             existing_state.get("uploadId") == req.upload_id
             and existing_state.get("sessionId") == req.session_id
+            and existing_state.get("nickname") == req.nickname
+            and existing_state.get("participantId") == req.participant_id
             and existing_state.get("submittedAt") == req.submitted_at
             and existing_state.get("source") == req.source
         )
@@ -176,6 +199,10 @@ class StateService:
         return {
             "uploadId": state.get("uploadId"),
             "status": state.get("status"),
+            "sessionId": state.get("sessionId"),
+            "nickname": state.get("nickname"),
+            "participantId": state.get("participantId"),
+            "submittedAt": state.get("submittedAt"),
             "updatedAt": state.get("updatedAt"),
             "progress": state.get("progress"),
             "results": state.get("results"),

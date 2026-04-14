@@ -1,17 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import {
-  MockAuthGateway,
-  MockUploadGateway,
-  type JobPhase,
-  type RankingEntry,
-} from "./mockGateways";
+import { type JobPhase, type RankingEntry } from "./mockGateways";
+import { createAuthGateway, createUploadGateway } from "./ingressGateway";
 import { createStateGateway, type StateGateway } from "./stateGateway";
 
 type View = "home" | "submit" | "ranking";
 type SubmitStatus = "idle" | "validating" | "submitting" | "success" | "failure";
 
-const authGateway = new MockAuthGateway();
-const uploadGateway = new MockUploadGateway();
+const authGateway = createAuthGateway();
+const uploadGateway = createUploadGateway();
 const stateGateway = createStateGateway();
 
 function supportsFailureSimulation(
@@ -27,6 +23,12 @@ function createInitialJobPhases(): Record<JobPhase, boolean> {
     completed: false,
     failed: false,
   };
+}
+
+function createSessionId(): string {
+  const date = new Date().toISOString().slice(0, 10);
+  const suffix = Math.random().toString(36).slice(2, 10);
+  return `spa-${date}-${suffix}`;
 }
 
 function App() {
@@ -48,6 +50,7 @@ function App() {
 
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const libraryInputRef = useRef<HTMLInputElement | null>(null);
+  const sessionIdRef = useRef<string>(createSessionId());
 
   useEffect(() => {
     void refreshRanking();
@@ -82,6 +85,8 @@ function App() {
   const canSubmit = selectedFile !== null && hasCredentials;
   const canSimulateFailure = supportsFailureSimulation(stateGateway);
   const gatewayDebug = stateGateway.getDebugInfo?.() ?? { mode: "unknown" };
+  const ingressDebug = authGateway.getDebugInfo?.() ?? { mode: "unknown" };
+  const uploadDebug = uploadGateway.getDebugInfo?.() ?? { mode: "unknown" };
 
   function resetSubmitState() {
     setSubmitStatus("idle");
@@ -159,7 +164,14 @@ function App() {
         stateGateway.setFailNext(forceFailureNextSubmit);
       }
 
-      const initResult = await authGateway.initUploadSession(password.trim());
+      const initResult = await authGateway.initUploadSession({
+        password: password.trim(),
+        nickname: nickname.trim(),
+        sessionId: sessionIdRef.current,
+        contentType: selectedFile.type || "image/jpeg",
+        originalFilename: selectedFile.name,
+        fileSizeBytes: selectedFile.size,
+      });
       if (!initResult.accepted) {
         setSubmitStatus("failure");
         setSubmitMessage(initResult.message ?? "Class code is invalid.");
@@ -168,9 +180,14 @@ function App() {
 
       setSubmitStatus("submitting");
       setSubmitMessage("Uploading photo...");
-      await uploadGateway.uploadPhoto(initResult.uploadTarget, selectedFile, (progress) => {
-        setUploadProgress(progress);
-      });
+      await uploadGateway.uploadPhoto(
+        initResult.uploadTarget,
+        selectedFile,
+        (progress) => {
+          setUploadProgress(progress);
+        },
+        initResult.uploadHeaders
+      );
 
       setSubmitMessage("Photo accepted. Processing...");
       const finalResult = await stateGateway.awaitJobCompletion(initResult.jobId, (phase) => {
@@ -191,9 +208,10 @@ function App() {
         setSubmitStatus("failure");
         setSubmitMessage(finalResult.message ?? "Processing failed.");
       }
-    } catch {
+    } catch (error) {
       setSubmitStatus("failure");
-      setSubmitMessage("Submission failed. Check connection and retry.");
+      const message = error instanceof Error ? error.message : "Submission failed. Check connection and retry.";
+      setSubmitMessage(message);
     } finally {
       setForceFailureNextSubmit(false);
     }
@@ -345,6 +363,11 @@ function App() {
                 Gateway: {gatewayDebug.mode}
                 {gatewayDebug.mode === "ms4" && gatewayDebug.baseUrl ? ` (${gatewayDebug.baseUrl})` : ""}
               </p>
+              <p className="muted">
+                Ingress: {ingressDebug.mode}
+                {ingressDebug.mode === "ms1" && ingressDebug.baseUrl ? ` (${ingressDebug.baseUrl})` : ""}
+              </p>
+              <p className="muted">Upload: {uploadDebug.mode}</p>
               <p className="muted">Upload progress: {uploadProgress}%</p>
               <ul className="phase-list">
                 <li className={jobPhases.queued ? "active" : ""}>Queued</li>

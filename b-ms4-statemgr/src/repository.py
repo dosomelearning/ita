@@ -123,6 +123,20 @@ class StateRepository:
                 ) from exc
             raise
 
+    def list_participant_states(self, *, session_id: str, participant_id: str, limit: int = 20) -> list[dict[str, Any]]:
+        response = self._ddb.query(
+            TableName=self._table_name,
+            IndexName="GSI2",
+            KeyConditionExpression="#gsi2pk = :gsi2pk",
+            ExpressionAttributeNames={"#gsi2pk": "gsi2pk"},
+            ExpressionAttributeValues={
+                ":gsi2pk": {"S": f"PARTICIPANT#{session_id}#{participant_id}"},
+            },
+            ScanIndexForward=False,
+            Limit=limit,
+        )
+        return [_from_ddb_item(item) for item in response.get("Items", [])]
+
 
 def _ddb_key(upload_id: str, sk: str) -> dict[str, dict[str, str]]:
     return {"PK": {"S": f"UPLOAD#{upload_id}"}, "SK": {"S": sk}}

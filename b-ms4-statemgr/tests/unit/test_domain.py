@@ -3,6 +3,7 @@ import pytest
 from src.domain import (
     DomainError,
     assert_transition_allowed,
+    build_participant_id,
     validate_event_payload,
     validate_init_payload,
 )
@@ -13,12 +14,15 @@ def test_validate_init_payload_success():
         {
             "uploadId": "u-1",
             "sessionId": "s-1",
+            "nickname": "Alice",
             "submittedAt": "2026-04-14T10:00:00Z",
             "source": "spa",
         }
     )
     assert req.upload_id == "u-1"
     assert req.session_id == "s-1"
+    assert req.nickname == "Alice"
+    assert req.participant_id == "alice"
     assert req.submitted_at == "2026-04-14T10:00:00Z"
 
 
@@ -28,11 +32,16 @@ def test_validate_init_payload_rejects_source():
             {
                 "uploadId": "u-1",
                 "sessionId": "s-1",
+                "nickname": "Alice",
                 "submittedAt": "2026-04-14T10:00:00Z",
                 "source": "mobile",
             }
         )
     assert exc.value.code == "VALIDATION_ERROR"
+
+
+def test_build_participant_id_normalizes_nickname():
+    assert build_participant_id("  Alice   The   Great ") == "alice the great"
 
 
 def test_validate_event_payload_for_ms2_processing():

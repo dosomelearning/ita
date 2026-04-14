@@ -43,6 +43,12 @@ class InMemoryRepository:
         self.events[(upload_id, event_item["SK"])] = deepcopy(event_item)
         self.states[upload_id] = deepcopy(next_state)
 
+    def list_participant_states(self, *, session_id: str, participant_id: str, limit: int = 20):
+        expected_pk = f"PARTICIPANT#{session_id}#{participant_id}"
+        matching = [state for state in self.states.values() if state.get("gsi2pk") == expected_pk]
+        matching.sort(key=lambda item: item.get("gsi2sk", ""), reverse=True)
+        return deepcopy(matching[:limit])
+
 
 def make_service(cloudfront_domain: str = "d111111abcdef8.cloudfront.net") -> StateService:
     return StateService(repository=InMemoryRepository(), cloudfront_domain=cloudfront_domain)
@@ -54,12 +60,15 @@ def test_register_upload_init_creates_queued_state():
         {
             "uploadId": "u-1",
             "sessionId": "s-1",
+            "nickname": "Alice",
             "submittedAt": "2026-04-14T10:00:00Z",
             "source": "spa",
         }
     )
     assert result["uploadId"] == "u-1"
     assert result["status"] == "queued"
+    assert result["nickname"] == "Alice"
+    assert result["participantId"] == "alice"
     assert result["results"] is None
 
 
@@ -68,6 +77,7 @@ def test_register_upload_init_is_idempotent_for_same_payload():
     payload = {
         "uploadId": "u-1",
         "sessionId": "s-1",
+        "nickname": "Alice",
         "submittedAt": "2026-04-14T10:00:00Z",
         "source": "spa",
     }
@@ -83,6 +93,7 @@ def test_register_upload_init_rejects_conflicting_payload():
         {
             "uploadId": "u-1",
             "sessionId": "s-1",
+            "nickname": "Alice",
             "submittedAt": "2026-04-14T10:00:00Z",
             "source": "spa",
         }
@@ -92,6 +103,7 @@ def test_register_upload_init_rejects_conflicting_payload():
             {
                 "uploadId": "u-1",
                 "sessionId": "s-2",
+                "nickname": "Alice",
                 "submittedAt": "2026-04-14T10:00:00Z",
                 "source": "spa",
             }
@@ -105,6 +117,7 @@ def test_record_processing_event_updates_state():
         {
             "uploadId": "u-1",
             "sessionId": "s-1",
+            "nickname": "Alice",
             "submittedAt": "2026-04-14T10:00:00Z",
             "source": "spa",
         }
@@ -129,6 +142,7 @@ def test_record_completed_event_builds_cloudfront_urls():
         {
             "uploadId": "u-1",
             "sessionId": "s-1",
+            "nickname": "Alice",
             "submittedAt": "2026-04-14T10:00:00Z",
             "source": "spa",
         }
@@ -170,6 +184,7 @@ def test_record_event_duplicate_is_idempotent():
         {
             "uploadId": "u-1",
             "sessionId": "s-1",
+            "nickname": "Alice",
             "submittedAt": "2026-04-14T10:00:00Z",
             "source": "spa",
         }
@@ -194,3 +209,31 @@ def test_get_status_missing_upload():
     with pytest.raises(DomainError) as exc:
         service.get_status("missing")
     assert exc.value.code == "UPLOAD_NOT_FOUND"
+
+
+def test_get_participant_uploads_returns_newest_first():
+    service = make_service()
+    service.register_upload_init(
+        {
+            "uploadId": "u-1",
+            "sessionId": "s-1",
+            "nickname": "Alice",
+            "submittedAt": "2026-04-14T10:00:00Z",
+            "source": "spa",
+        }
+    )
+    service.register_upload_init(
+        {
+            "uploadId": "u-2",
+            "sessionId": "s-1",
+            "nickname": "alice",
+            "submittedAt": "2026-04-14T10:02:00Z",
+            "source": "spa",
+        }
+    )
+
+    result = service.get_participant_uploads(session_id="s-1", nickname=" Alice ", limit=10)
+    assert result["participantId"] == "alice"
+    assert len(result["items"]) == 2
+    assert result["items"][0]["uploadId"] == "u-2"
+    assert result["items"][1]["uploadId"] == "u-1"

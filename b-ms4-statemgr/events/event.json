@@ -17,6 +17,6 @@
   "headers": {
     "content-type": "application/json"
   },
-  "body": "{\"uploadId\":\"u-100\",\"sessionId\":\"s-2026-04-14\",\"submittedAt\":\"2026-04-14T12:00:00Z\",\"source\":\"spa\"}",
+  "body": "{\"uploadId\":\"u-100\",\"sessionId\":\"s-2026-04-14\",\"nickname\":\"alice\",\"submittedAt\":\"2026-04-14T12:00:00Z\",\"source\":\"spa\"}",
   "isBase64Encoded": false
 }

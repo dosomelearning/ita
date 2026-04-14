@@ -55,6 +55,23 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties:
       BucketName: !Sub "${ProjectPrefix}-data-${RandomSuffix}"
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - "http://localhost:5173"
+              - "http://127.0.0.1:5173"
+              - "https://ita.dosomelearning.com"
+            AllowedMethods:
+              - PUT
+              - GET
+              - HEAD
+            AllowedHeaders:
+              - "*"
+            ExposedHeaders:
+              - ETag
+              - x-amz-request-id
+              - x-amz-id-2
+            MaxAge: 3000
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true

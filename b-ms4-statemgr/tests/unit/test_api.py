@@ -10,7 +10,15 @@ class StubService:
 
     def register_upload_init(self, payload):
         self.calls.append(("init", payload))
-        return {"uploadId": payload["uploadId"], "status": "queued", "updatedAt": "2026-04-14T10:00:00Z"}
+        return {
+            "uploadId": payload["uploadId"],
+            "status": "queued",
+            "sessionId": payload["sessionId"],
+            "nickname": payload["nickname"],
+            "participantId": payload["nickname"].strip().lower(),
+            "submittedAt": payload["submittedAt"],
+            "updatedAt": "2026-04-14T10:00:00Z",
+        }
 
     def record_processing_event(self, upload_id, payload):
         self.calls.append(("event", upload_id, payload))
@@ -26,6 +34,28 @@ class StubService:
                 details={"uploadId": upload_id},
             )
         return {"uploadId": upload_id, "status": "processing", "updatedAt": "2026-04-14T10:02:00Z"}
+
+    def get_participant_uploads(self, *, session_id, nickname, limit):
+        self.calls.append(("participant_uploads", session_id, nickname, limit))
+        return {
+            "sessionId": session_id,
+            "nickname": nickname,
+            "participantId": nickname.strip().lower(),
+            "items": [
+                {
+                    "uploadId": "u-2",
+                    "status": "completed",
+                    "sessionId": session_id,
+                    "nickname": nickname,
+                    "participantId": nickname.strip().lower(),
+                    "submittedAt": "2026-04-14T10:02:00Z",
+                    "updatedAt": "2026-04-14T10:03:00Z",
+                    "progress": {"stage": "completed"},
+                    "results": {},
+                    "error": None,
+                }
+            ],
+        }
 
 
 def make_http_event(method: str, path: str, body: str | None = None):
@@ -45,6 +75,7 @@ def test_post_internal_init_route():
             {
                 "uploadId": "u-1",
                 "sessionId": "s-1",
+                "nickname": "Alice",
                 "submittedAt": "2026-04-14T10:00:00Z",
                 "source": "spa",
             }
@@ -86,6 +117,35 @@ def test_get_status_route():
     assert response["statusCode"] == 200
     payload = json.loads(response["body"])
     assert payload["uploadId"] == "u-1"
+
+
+def test_get_participant_uploads_route():
+    api = Ms4Api(StubService())
+    event = make_http_event("GET", "/v1/sessions/s-1/participants/Alice/uploads")
+    response = api.handle(event, None)
+    assert response["statusCode"] == 200
+    payload = json.loads(response["body"])
+    assert payload["sessionId"] == "s-1"
+    assert payload["nickname"] == "Alice"
+    assert len(payload["items"]) == 1
+
+
+def test_get_participant_uploads_route_with_limit_query():
+    api = Ms4Api(StubService())
+    event = make_http_event("GET", "/v1/sessions/s-1/participants/Alice/uploads")
+    event["queryStringParameters"] = {"limit": "5"}
+    response = api.handle(event, None)
+    assert response["statusCode"] == 200
+
+
+def test_get_participant_uploads_route_rejects_invalid_limit():
+    api = Ms4Api(StubService())
+    event = make_http_event("GET", "/v1/sessions/s-1/participants/Alice/uploads")
+    event["queryStringParameters"] = {"limit": "zero"}
+    response = api.handle(event, None)
+    assert response["statusCode"] == 400
+    payload = json.loads(response["body"])
+    assert payload["error"]["code"] == "VALIDATION_ERROR"
 
 
 def test_error_envelope_for_domain_error():
