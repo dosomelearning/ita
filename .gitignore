@@ -66,3 +66,6 @@ b-infra/index.test.generated.html
 tmp/
 temp/
 .cache/
+
+# Codex local marker
+.codex
