@@ -21,7 +21,7 @@ Current implementation includes frontend-only flow with mock adapters:
 - photo capture from camera
 - selecting an existing photo from device/computer
 - mock submit lifecycle with upload/progress/status states
-- ranking preview and full ranking screen using mock data
+- activity feed preview and full activity screen (mock or MS4-backed)
 - runtime-selectable state gateway:
   - `mock` mode for local/dev flow
   - `ms4` mode for live status polling via `GET /v1/uploads/{uploadId}/status`
@@ -33,7 +33,7 @@ Current implementation includes frontend-only flow with mock adapters:
 - Upload photo to presigned S3 URL returned by ingress.
 - Poll/read processing state and result metadata via state API.
 - Render extracted face images and related metadata.
-- Optionally render class-oriented ranking/leaderboard views.
+- Render class-wide latest activity feed entries (`latest 20` default).
 
 ## External Interfaces
 
@@ -88,4 +88,4 @@ Environment variables (Vite):
 
 Current scope note:
 
-- Ranking remains mock-backed in both modes until ranking endpoint contract is finalized.
+- Activity feed is class-run scoped and uses `MS1`-returned `classRunId` in `ms4` mode.

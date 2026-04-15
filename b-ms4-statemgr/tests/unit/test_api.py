@@ -57,6 +57,23 @@ class StubService:
             ],
         }
 
+    def get_session_activities(self, *, session_id, limit):
+        self.calls.append(("session_activities", session_id, limit))
+        return {
+            "sessionId": session_id,
+            "items": [
+                {
+                    "uploadId": "u-2",
+                    "eventType": "detection_failed",
+                    "statusAfter": "failed",
+                    "eventTime": "2026-04-14T10:03:00.100Z",
+                    "producer": "ms2",
+                    "outcome": "failure",
+                    "details": {"error": {"code": "NO_FACES_DETECTED"}},
+                }
+            ],
+        }
+
 
 def make_http_event(method: str, path: str, body: str | None = None):
     return {
@@ -146,6 +163,17 @@ def test_get_participant_uploads_route_rejects_invalid_limit():
     assert response["statusCode"] == 400
     payload = json.loads(response["body"])
     assert payload["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_get_session_activities_route():
+    api = Ms4Api(StubService())
+    event = make_http_event("GET", "/v1/sessions/cr-1/activities")
+    response = api.handle(event, None)
+    assert response["statusCode"] == 200
+    payload = json.loads(response["body"])
+    assert payload["sessionId"] == "cr-1"
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["outcome"] == "failure"
 
 
 def test_error_envelope_for_domain_error():

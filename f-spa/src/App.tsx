@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import { type JobPhase, type RankingEntry } from "./mockGateways";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { type ActivityEntry, type JobPhase } from "./mockGateways";
 import { createAuthGateway, createUploadGateway } from "./ingressGateway";
 import { createStateGateway, type StateGateway } from "./stateGateway";
 
-type View = "home" | "submit" | "ranking";
+type View = "home" | "submit" | "activity";
 type SubmitStatus = "idle" | "validating" | "submitting" | "success" | "failure";
 
 const authGateway = createAuthGateway();
@@ -41,20 +41,16 @@ function App() {
   const [submitMessage, setSubmitMessage] = useState("No submission yet.");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [jobPhases, setJobPhases] = useState(createInitialJobPhases);
-  const [ranking, setRanking] = useState<RankingEntry[]>([]);
-  const [rankingLoading, setRankingLoading] = useState(false);
-  const [rankingError, setRankingError] = useState<string | null>(null);
-  const [rankingUpdatedAt, setRankingUpdatedAt] = useState<string | null>(null);
-  const [latestSubmission, setLatestSubmission] = useState<RankingEntry | null>(null);
+  const [classRunId, setClassRunId] = useState<string>("");
+  const [activities, setActivities] = useState<ActivityEntry[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [activitiesError, setActivitiesError] = useState<string | null>(null);
+  const [activitiesUpdatedAt, setActivitiesUpdatedAt] = useState<string | null>(null);
   const [forceFailureNextSubmit, setForceFailureNextSubmit] = useState(false);
 
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const libraryInputRef = useRef<HTMLInputElement | null>(null);
   const sessionIdRef = useRef<string>(createSessionId());
-
-  useEffect(() => {
-    void refreshRanking();
-  }, []);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -70,16 +66,12 @@ function App() {
     };
   }, [selectedFile]);
 
-  const displayRanking = useMemo(() => {
-    if (!latestSubmission) {
-      return ranking;
+  useEffect(() => {
+    if (!classRunId) {
+      return;
     }
-
-    const withoutLatest = ranking.filter((item) => item.id !== latestSubmission.id);
-    return [latestSubmission, ...withoutLatest].sort((a, b) => b.score - a.score);
-  }, [latestSubmission, ranking]);
-
-  const rankingPreview = useMemo(() => displayRanking.slice(0, 5), [displayRanking]);
+    void refreshActivities(classRunId);
+  }, [classRunId]);
 
   const hasCredentials = password.trim().length > 0 && nickname.trim().length > 0;
   const canSubmit = selectedFile !== null && hasCredentials;
@@ -114,17 +106,22 @@ function App() {
     event.target.value = "";
   }
 
-  async function refreshRanking() {
-    setRankingLoading(true);
-    setRankingError(null);
+  async function refreshActivities(runId: string) {
+    if (!runId.trim()) {
+      setActivities([]);
+      setActivitiesUpdatedAt(null);
+      return;
+    }
+    setActivitiesLoading(true);
+    setActivitiesError(null);
     try {
-      const nextRanking = await stateGateway.getRanking();
-      setRanking(nextRanking);
-      setRankingUpdatedAt(new Date().toLocaleTimeString());
+      const nextItems = await stateGateway.getActivities(runId, 20);
+      setActivities(nextItems);
+      setActivitiesUpdatedAt(new Date().toLocaleTimeString());
     } catch {
-      setRankingError("Failed to load ranking. Try refreshing.");
+      setActivitiesError("Failed to load activity feed. Try refreshing.");
     } finally {
-      setRankingLoading(false);
+      setActivitiesLoading(false);
     }
   }
 
@@ -177,6 +174,10 @@ function App() {
         setSubmitMessage(initResult.message ?? "Class code is invalid.");
         return;
       }
+      const nextClassRunId = initResult.classRunId?.trim() ?? "";
+      if (nextClassRunId) {
+        setClassRunId(nextClassRunId);
+      }
 
       setSubmitStatus("submitting");
       setSubmitMessage("Uploading photo...");
@@ -197,16 +198,12 @@ function App() {
       if (finalResult.status === "completed") {
         setSubmitStatus("success");
         setSubmitMessage(`Photo processed successfully for ${nickname.trim()}.`);
-        setLatestSubmission({
-          id: `local-${nickname.trim().toLowerCase()}`,
-          name: nickname.trim(),
-          score: 31 + Math.floor(Math.random() * 7),
-          lastUpdateLabel: new Date().toLocaleTimeString(),
-        });
-        void refreshRanking();
       } else {
         setSubmitStatus("failure");
         setSubmitMessage(finalResult.message ?? "Processing failed.");
+      }
+      if (nextClassRunId) {
+        void refreshActivities(nextClassRunId);
       }
     } catch (error) {
       setSubmitStatus("failure");
@@ -282,27 +279,36 @@ function App() {
 
             <section className="ranking-panel">
               <div className="panel-header">
-                <h3>Ranking Preview</h3>
-                <button className="link-btn" type="button" onClick={() => void refreshRanking()}>
+                <h3>Activity Feed</h3>
+                <button
+                  className="link-btn"
+                  type="button"
+                  onClick={() => {
+                    if (classRunId) {
+                      void refreshActivities(classRunId);
+                    }
+                  }}
+                >
                   Refresh
                 </button>
               </div>
-              {rankingLoading && <p className="muted">Loading ranking...</p>}
-              {rankingError && <p className="status-error">{rankingError}</p>}
-              {!rankingLoading && !rankingError && rankingPreview.length === 0 && (
-                <p className="muted">No ranking data yet.</p>
+              {activitiesLoading && <p className="muted">Loading activities...</p>}
+              {activitiesError && <p className="status-error">{activitiesError}</p>}
+              {!activitiesLoading && !activitiesError && activities.length === 0 && (
+                <p className="muted">No activities yet. Submit a photo to begin.</p>
               )}
-              {!rankingLoading && !rankingError && rankingPreview.length > 0 && (
+              {!activitiesLoading && !activitiesError && activities.length > 0 && (
                 <ol className="ranking-list">
-                  {rankingPreview.map((item) => (
-                    <li key={item.id}>
-                      <span>{item.name}</span>
-                      <strong>{item.score}</strong>
+                  {activities.slice(0, 5).map((item) => (
+                    <li key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}>
+                      <span>{item.nickname}</span>
+                      <strong>{activityMarker(item)}</strong>
                     </li>
                   ))}
                 </ol>
               )}
-              <p className="muted">Updated: {rankingUpdatedAt ?? "not yet"}</p>
+              <p className="muted">Class run: {classRunId || "not initialized yet"}</p>
+              <p className="muted">Updated: {activitiesUpdatedAt ?? "not yet"}</p>
             </section>
           </>
         )}
@@ -379,28 +385,38 @@ function App() {
           </>
         )}
 
-        {view === "ranking" && (
+        {view === "activity" && (
           <>
             <div className="panel-header">
-              <h2>Ranking</h2>
-              <button className="link-btn" type="button" onClick={() => void refreshRanking()}>
+              <h2>Activity Feed</h2>
+              <button
+                className="link-btn"
+                type="button"
+                onClick={() => {
+                  if (classRunId) {
+                    void refreshActivities(classRunId);
+                  }
+                }}
+              >
                 Refresh
               </button>
             </div>
-            {rankingLoading && <p className="muted">Loading ranking...</p>}
-            {rankingError && <p className="status-error">{rankingError}</p>}
-            {!rankingLoading && !rankingError && ranking.length === 0 && (
-              <p className="muted">No ranking data yet.</p>
+            {activitiesLoading && <p className="muted">Loading activity feed...</p>}
+            {activitiesError && <p className="status-error">{activitiesError}</p>}
+            {!activitiesLoading && !activitiesError && activities.length === 0 && (
+              <p className="muted">No activities available.</p>
             )}
-            {!rankingLoading && !rankingError && displayRanking.length > 0 && (
+            {!activitiesLoading && !activitiesError && activities.length > 0 && (
               <ol className="ranking-list ranking-list-full">
-                {displayRanking.map((item) => (
-                  <li key={item.id}>
+                {activities.map((item) => (
+                  <li key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}>
                     <div>
-                      <span>{item.name}</span>
-                      <small>{item.lastUpdateLabel}</small>
+                      <span>{item.nickname}</span>
+                      <small>
+                        {item.eventType} · {new Date(item.eventTime).toLocaleTimeString()}
+                      </small>
                     </div>
-                    <strong>{item.score}</strong>
+                    <strong>{activityMarker(item)}</strong>
                   </li>
                 ))}
               </ol>
@@ -425,11 +441,11 @@ function App() {
           Submit
         </button>
         <button
-          className={`nav-btn ${view === "ranking" ? "active" : ""}`}
+          className={`nav-btn ${view === "activity" ? "active" : ""}`}
           type="button"
-          onClick={() => setView("ranking")}
+          onClick={() => setView("activity")}
         >
-          Ranking
+          Activity
         </button>
       </nav>
 
@@ -450,6 +466,19 @@ function App() {
       />
     </main>
   );
+}
+
+function activityMarker(item: ActivityEntry): string {
+  if (item.outcome === "success") {
+    return "CHECK";
+  }
+  if (item.outcome === "failure") {
+    return "X";
+  }
+  if (item.outcome === "queued") {
+    return "QUEUED";
+  }
+  return "RUN";
 }
 
 export default App;

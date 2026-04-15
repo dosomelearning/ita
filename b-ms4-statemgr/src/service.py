@@ -8,6 +8,8 @@ try:  # Lambda runtime import path
         EventRequest,
         InitRequest,
         assert_transition_allowed,
+        build_activity_gsi3pk,
+        build_activity_gsi3sk,
         build_event_sk,
         build_participant_id,
         utc_now_iso,
@@ -21,6 +23,8 @@ except ImportError:  # Unit tests/package import path
         EventRequest,
         InitRequest,
         assert_transition_allowed,
+        build_activity_gsi3pk,
+        build_activity_gsi3sk,
         build_event_sk,
         build_participant_id,
         utc_now_iso,
@@ -129,6 +133,26 @@ class StateService:
             "items": [self._to_status_response(item) for item in items],
         }
 
+    def get_session_activities(self, *, session_id: str, limit: int = 20) -> dict[str, Any]:
+        safe_limit = min(max(limit, 1), 50)
+        items = self._repository.list_session_activities(session_id=session_id, limit=safe_limit)
+        activity_items = [
+            {
+                "uploadId": item.get("uploadId"),
+                "sessionId": item.get("sessionId"),
+                "nickname": item.get("nickname"),
+                "participantId": item.get("participantId"),
+                "eventType": item.get("eventType"),
+                "statusAfter": item.get("statusAfter"),
+                "eventTime": item.get("eventTime"),
+                "producer": item.get("producer"),
+                "outcome": _map_activity_outcome(str(item.get("statusAfter", ""))),
+                "details": item.get("details", {}),
+            }
+            for item in items
+        ]
+        return {"sessionId": session_id, "items": activity_items}
+
     def _build_next_state(self, *, state: dict[str, Any], event: EventRequest, event_sk: str) -> dict[str, Any]:
         next_state = dict(state)
         next_state["status"] = event.status_after
@@ -157,11 +181,15 @@ class StateService:
             "entityType": "EVENT",
             "uploadId": event.upload_id,
             "sessionId": state["sessionId"],
+            "nickname": state.get("nickname"),
+            "participantId": state.get("participantId"),
             "eventType": event.event_type,
             "eventTime": event.event_time,
             "producer": event.producer,
             "statusAfter": event.status_after,
             "details": event.details,
+            "gsi3pk": build_activity_gsi3pk(str(state["sessionId"])),
+            "gsi3sk": build_activity_gsi3sk(event.event_time, event.upload_id, event.event_type),
         }
 
     def _build_results(self, results: dict[str, Any]) -> dict[str, Any]:
@@ -216,3 +244,15 @@ def _build_cloudfront_url(cloudfront_domain: str, key: str) -> str:
     if not domain.startswith("http://") and not domain.startswith("https://"):
         domain = f"https://{domain}"
     return f"{domain}/{key_part}"
+
+
+def _map_activity_outcome(status_after: str) -> str:
+    if status_after == "completed":
+        return "success"
+    if status_after == "failed":
+        return "failure"
+    if status_after == "processing":
+        return "in_progress"
+    if status_after == "queued":
+        return "queued"
+    return "in_progress"

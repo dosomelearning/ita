@@ -19,6 +19,7 @@ UPLOAD_EVENT_PATH_RE = re.compile(r"^/internal/uploads/(?P<upload_id>[^/]+)/even
 PARTICIPANT_UPLOADS_PATH_RE = re.compile(
     r"^/v1/sessions/(?P<session_id>[^/]+)/participants/(?P<nickname>[^/]+)/uploads$"
 )
+SESSION_ACTIVITIES_PATH_RE = re.compile(r"^/v1/sessions/(?P<session_id>[^/]+)/activities$")
 
 
 class Ms4Api:
@@ -60,6 +61,12 @@ class Ms4Api:
                         nickname=nickname,
                         limit=limit,
                     )
+                    return _ok(200, result)
+                match = SESSION_ACTIVITIES_PATH_RE.match(path)
+                if match:
+                    session_id = unquote(match.group("session_id"))
+                    limit = _read_limit(event)
+                    result = self._service.get_session_activities(session_id=session_id, limit=limit)
                     return _ok(200, result)
 
             raise DomainError(

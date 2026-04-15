@@ -75,7 +75,7 @@ def validate_upload_init_payload(payload: dict[str, Any]) -> UploadInitRequest:
 
 
 def utc_now_iso() -> str:
-    return datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(tz=timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def _required_string(payload: dict[str, Any], field: str) -> str:

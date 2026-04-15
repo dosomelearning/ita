@@ -57,6 +57,10 @@ Resources:
           AttributeType: S
         - AttributeName: gsi2sk
           AttributeType: S
+        - AttributeName: gsi3pk
+          AttributeType: S
+        - AttributeName: gsi3sk
+          AttributeType: S
       KeySchema:
         - AttributeName: PK
           KeyType: HASH
@@ -76,6 +80,14 @@ Resources:
             - AttributeName: gsi2pk
               KeyType: HASH
             - AttributeName: gsi2sk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GSI3
+          KeySchema:
+            - AttributeName: gsi3pk
+              KeyType: HASH
+            - AttributeName: gsi3sk
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
@@ -121,6 +133,12 @@ Resources:
           Properties:
             ApiId: !Ref StateMgrApi
             Path: /v1/sessions/{sessionId}/participants/{nickname}/uploads
+            Method: GET
+        PublicSessionActivities:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref StateMgrApi
+            Path: /v1/sessions/{sessionId}/activities
             Method: GET
 
 Outputs:

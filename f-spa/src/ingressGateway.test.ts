@@ -54,6 +54,7 @@ describe("ms1 auth gateway behavior", () => {
         responseOk({
           accepted: true,
           uploadId: "upl-1",
+          classRunId: "cr-aaaa1111",
           uploadUrl: "https://example-presigned",
           uploadHeaders: { "Content-Type": "image/jpeg" },
         })
@@ -72,6 +73,7 @@ describe("ms1 auth gateway behavior", () => {
     });
     expect(result.accepted).toBe(true);
     expect(result.jobId).toBe("upl-1");
+    expect(result.classRunId).toBe("cr-aaaa1111");
     expect(result.uploadTarget).toBe("https://example-presigned");
     fetchSpy.mockRestore();
   });

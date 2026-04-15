@@ -114,4 +114,32 @@ describe("Ms4StateGateway", () => {
     expect(result.status).toBe("failed");
     expect(result.message).toContain("ms3");
   });
+
+  it("loads activity feed items from ms4", async () => {
+    const fetchImpl = vi
+      .fn<(...args: [RequestInfo | URL, RequestInit | undefined]) => Promise<Response>>()
+      .mockResolvedValue(
+        okResponse({
+          sessionId: "cr-a1",
+          items: [
+            {
+              uploadId: "upl-1",
+              nickname: "ava",
+              eventType: "detection_completed",
+              statusAfter: "processing",
+              eventTime: "2026-04-15T18:00:00.123Z",
+              producer: "ms2",
+              outcome: "in_progress",
+            },
+          ],
+        })
+      );
+    const gateway = new Ms4StateGateway("https://ita.dosomelearning.com", { fetchImpl });
+
+    const items = await gateway.getActivities("cr-a1", 20);
+
+    expect(items).toHaveLength(1);
+    expect(items[0].uploadId).toBe("upl-1");
+    expect(items[0].outcome).toBe("in_progress");
+  });
 });

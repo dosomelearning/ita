@@ -1,8 +1,9 @@
-import { MockStateGateway, type JobCompletionResult, type JobPhase, type RankingEntry } from "./mockGateways";
+import { MockStateGateway, type ActivityEntry, type JobCompletionResult, type JobPhase, type RankingEntry } from "./mockGateways";
 
 export interface StateGateway {
   awaitJobCompletion(jobId: string, onPhase: (phase: JobPhase) => void): Promise<JobCompletionResult>;
   getRanking(): Promise<RankingEntry[]>;
+  getActivities(classRunId: string, limit?: number): Promise<ActivityEntry[]>;
   setFailNext?(shouldFail: boolean): void;
   getDebugInfo?(): { mode: "mock" | "ms4"; baseUrl?: string };
 }
@@ -19,6 +20,20 @@ interface Ms4StatusResponse {
     retryable?: boolean;
     details?: Record<string, unknown>;
   } | null;
+}
+
+interface Ms4ActivitiesResponse {
+  sessionId: string;
+  items: Array<{
+    uploadId: string;
+    nickname?: string;
+    eventType: string;
+    statusAfter: JobPhase;
+    eventTime: string;
+    producer: "ms2" | "ms3";
+    outcome: "queued" | "in_progress" | "success" | "failure";
+    details?: Record<string, unknown>;
+  }>;
 }
 
 interface GatewayConfig {
@@ -133,6 +148,42 @@ export class Ms4StateGateway implements StateGateway {
     return this.rankingGateway.getRanking();
   }
 
+  async getActivities(classRunId: string, limit = 20): Promise<ActivityEntry[]> {
+    const endpoint = `${this.ms4BaseUrl}/v1/sessions/${encodeURIComponent(classRunId)}/activities?limit=${encodeURIComponent(
+      String(limit)
+    )}`;
+    let response: Response;
+    try {
+      response = await this.fetchImpl(endpoint, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+    } catch (error) {
+      throw new Error(`Activity request to MS4 failed (${formatFetchError(error)}).`);
+    }
+
+    const payload = (await parseJsonBody(response)) as Ms4ActivitiesResponse | null;
+    if (!response.ok) {
+      const message =
+        payload && typeof (payload as any).error?.message === "string"
+          ? (payload as any).error.message
+          : "MS4 returned an error while loading activities.";
+      throw new Error(message);
+    }
+    if (!payload || !Array.isArray(payload.items)) {
+      throw new Error("MS4 activity response shape is invalid.");
+    }
+    return payload.items.map((item) => ({
+      uploadId: item.uploadId,
+      nickname: item.nickname ?? "unknown",
+      eventType: item.eventType,
+      statusAfter: item.statusAfter,
+      eventTime: item.eventTime,
+      producer: item.producer,
+      outcome: item.outcome,
+    }));
+  }
+
   getDebugInfo(): { mode: "mock" | "ms4"; baseUrl?: string } {
     return { mode: "ms4", baseUrl: this.ms4BaseUrl };
   }
@@ -210,6 +261,10 @@ class MockStateGatewayAdapter implements StateGateway {
 
   getRanking(): Promise<RankingEntry[]> {
     return this.gateway.getRanking();
+  }
+
+  getActivities(classRunId: string, limit = 20): Promise<ActivityEntry[]> {
+    return this.gateway.getActivities(classRunId, limit);
   }
 
   setFailNext(shouldFail: boolean): void {

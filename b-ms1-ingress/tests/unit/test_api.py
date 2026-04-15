@@ -15,6 +15,7 @@ class StubService:
         return {
             "accepted": True,
             "uploadId": "upl-1",
+            "classRunId": "cr-demo",
             "uploadUrl": "https://example",
             "uploadMethod": "PUT",
             "uploadHeaders": {"Content-Type": "image/jpeg"},

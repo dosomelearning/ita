@@ -4,6 +4,7 @@ export interface InitUploadResult {
   accepted: boolean;
   uploadTarget: string;
   jobId: string;
+  classRunId?: string;
   message?: string;
 }
 
@@ -17,6 +18,16 @@ export interface RankingEntry {
   name: string;
   score: number;
   lastUpdateLabel: string;
+}
+
+export interface ActivityEntry {
+  uploadId: string;
+  nickname: string;
+  eventType: string;
+  statusAfter: JobPhase;
+  eventTime: string;
+  producer: "ms2" | "ms3";
+  outcome: "queued" | "in_progress" | "success" | "failure";
 }
 
 function wait(milliseconds: number): Promise<void> {
@@ -44,6 +55,7 @@ export class MockAuthGateway {
       accepted: true,
       uploadTarget: "mock://s3/presigned-url",
       jobId: `job-${suffix}`,
+      classRunId: `cr-mock-${normalized}`,
     };
   }
 }
@@ -113,5 +125,31 @@ export class MockStateGateway {
         lastUpdateLabel: now.toLocaleTimeString(),
       }))
       .sort((a, b) => b.score - a.score);
+  }
+
+  async getActivities(_classRunId: string, limit = 20): Promise<ActivityEntry[]> {
+    await wait(220);
+    const users = ["Ava Novak", "Liam Bauer", "Mia Horvat", "Noah Zoric", "Ema Kralj"];
+    const now = Date.now();
+    const items: ActivityEntry[] = Array.from({ length: Math.min(Math.max(limit, 1), 20) }).map((_, idx) => {
+      const phaseIndex = idx % 3;
+      const statusAfter: JobPhase = phaseIndex === 0 ? "failed" : phaseIndex === 1 ? "processing" : "completed";
+      return {
+        uploadId: `upl-mock-${1000 + idx}`,
+        nickname: users[idx % users.length],
+        eventType:
+          statusAfter === "failed"
+            ? "detection_failed"
+            : statusAfter === "processing"
+            ? "detection_completed"
+            : "extraction_completed",
+        statusAfter,
+        eventTime: new Date(now - idx * 17_000).toISOString(),
+        producer: statusAfter === "completed" ? "ms3" : "ms2",
+        outcome:
+          statusAfter === "failed" ? "failure" : statusAfter === "completed" ? "success" : "in_progress",
+      };
+    });
+    return items;
   }
 }

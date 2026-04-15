@@ -137,6 +137,20 @@ class StateRepository:
         )
         return [_from_ddb_item(item) for item in response.get("Items", [])]
 
+    def list_session_activities(self, *, session_id: str, limit: int = 20) -> list[dict[str, Any]]:
+        response = self._ddb.query(
+            TableName=self._table_name,
+            IndexName="GSI3",
+            KeyConditionExpression="#gsi3pk = :gsi3pk",
+            ExpressionAttributeNames={"#gsi3pk": "gsi3pk"},
+            ExpressionAttributeValues={
+                ":gsi3pk": {"S": f"FEED#CLASS#{session_id}"},
+            },
+            ScanIndexForward=False,
+            Limit=limit,
+        )
+        return [_from_ddb_item(item) for item in response.get("Items", [])]
+
 
 def _ddb_key(upload_id: str, sk: str) -> dict[str, dict[str, str]]:
     return {"PK": {"S": f"UPLOAD#{upload_id}"}, "SK": {"S": sk}}

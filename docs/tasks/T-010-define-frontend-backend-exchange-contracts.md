@@ -66,7 +66,7 @@ Out of scope:
 - Persist workflow lifecycle state per `uploadId`.
 - Accept state mutation calls from trusted backend services (`MS1`, `MS2`, `MS3`).
 - Expose frontend-readable state/result contract for polling.
-- Provide optional ranking-ready projection fields.
+- Provide frontend-readable class activity feed projection.
 
 ### 2) Canonical State Model
 
@@ -104,9 +104,11 @@ State ownership and transition intent:
 - Intent: retrieve current state and result references for rendering.
 - Success outcome: returns one of `queued|processing|completed|failed` plus metadata.
 
-Optional extension (deferred):
+Activity feed extension (current direction):
 
-- `GET /v1/ranking` for leaderboard projection once ranking rules are finalized.
+- `GET /v1/sessions/{sessionId}/activities`
+- Intent: fetch latest session activities (event-level feed), newest first.
+- Default limit: `20` (bounded).
 
 ### 3.1) Internal API Authentication Decision
 
@@ -180,6 +182,21 @@ Frontend participant history read (`GET /v1/sessions/{sessionId}/participants/{n
 - `nickname`
 - `participantId` (normalized identity key)
 - `items` (status-read projection list, newest first)
+
+Frontend activity feed read (`GET /v1/sessions/{sessionId}/activities`) response fields:
+
+- `sessionId`
+- `items` (event feed entries, newest first)
+- Feed item fields:
+  - `uploadId`
+  - `nickname`
+  - `participantId`
+  - `eventType`
+  - `statusAfter`
+  - `eventTime`
+  - `producer`
+  - `outcome` (`queued|in_progress|success|failure`)
+  - `details` (optional stage metadata)
 
 ### 4.1) Result Reference Format Decision
 
@@ -272,6 +289,10 @@ Decision (accepted for current implementation phase):
   - `SK = EVENT#<eventTime>#<eventType>#<producer>` for immutable event log items
 - `STATE` item carries current status/read projection fields.
 - `EVENT` items carry append-only audit/event history.
+- `GSI3` supports session activity feed query:
+  - `gsi3pk = FEED#CLASS#<classRunId>`
+  - `gsi3sk = E#<eventTimeMs>#U#<uploadId>#T#<eventType>`
+  - Query: `ScanIndexForward=false`, `Limit=20` (or caller-provided bounded limit).
 
 Access-pattern guardrail (mandatory):
 

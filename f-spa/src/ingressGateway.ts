@@ -13,6 +13,7 @@ export interface InitUploadResult {
   accepted: boolean;
   uploadTarget: string;
   jobId: string;
+  classRunId?: string;
   uploadHeaders?: Record<string, string>;
   message?: string;
 }
@@ -128,6 +129,7 @@ class Ms1AuthGateway implements AuthGateway {
       accepted: true,
       uploadTarget: uploadUrl,
       jobId: uploadId,
+      classRunId: typeof payload?.classRunId === "string" ? payload.classRunId : undefined,
       uploadHeaders:
         payload?.uploadHeaders && typeof payload.uploadHeaders === "object"
           ? (payload.uploadHeaders as Record<string, string>)
