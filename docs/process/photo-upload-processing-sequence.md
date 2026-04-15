@@ -23,7 +23,7 @@ The sequence models the complete path from user action in the SPA to final proce
 10. Asynchronous extraction handoff to `MS3` only when faces were detected.
 11. Face extraction in `MS3` and result writes to S3.
 12. State/result projection in `MS4` for frontend polling.
-13. SPA polling and final result rendering.
+13. SPA polling and final result summary rendering (phase 1: face count only).
 
 It also includes the explicit invalid-password rejection branch, which terminates before entering protected upload/processing flow.
 
@@ -115,6 +115,6 @@ sequenceDiagram
 
         SPA->>MS4: Poll status by uploadId
         MS4-->>SPA: Return queued/processing/completed/failed + refs
-        SPA-->>User: Show progress, then extracted faces and ranking-ready result
+        SPA-->>User: Show progress, then completed summary with face count
     end
 ```

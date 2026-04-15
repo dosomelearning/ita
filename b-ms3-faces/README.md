@@ -27,7 +27,8 @@ Face extraction microservice.
 - Read detection manifest/artifacts produced by `b-ms2-detection`.
 - Extract per-face images from source photo(s).
 - Store extracted face images in shared "extracted faces" storage.
-- Report extraction lifecycle status (`started`, `completed`, `failed`) to state manager.
+- Report extraction lifecycle status (`completed`, `failed`) to state manager.
+- Emit completed payload with `results.faceCount` for SPA phase-1 summary UX.
 
 ## Inbound / Outbound Contracts
 
@@ -37,6 +38,15 @@ Face extraction microservice.
 - Outbound:
   - Extracted face image artifacts.
   - Status updates and output references to `b-ms4-statemgr`.
+  - Completed event results:
+    - `results.faceCount` (integer)
+    - `results.faces[]` (`faceId`, `bucket`, `key`)
+
+## Current Delivery Slice (Phase 1)
+
+- `MS3` performs real extraction/cropping and stores `faces/*` objects.
+- SPA does not render face image gallery yet.
+- SPA reads `MS4` final status and displays a green face-count summary from `results.faceCount`.
 
 ## Queue Contract (Current v1 Consumer Target)
 

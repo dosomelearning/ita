@@ -14,7 +14,7 @@ Frontend single-page application (React + TypeScript), optimized for mobile uplo
 
 ## Purpose
 
-`f-spa` provides the user experience for photo capture/upload, job tracking, and displaying extracted face results.
+`f-spa` provides the user experience for photo capture/upload, job tracking, and displaying extraction outcomes.
 Current implementation includes frontend-only flow with mock adapters:
 
 - shared code/password entry
@@ -32,7 +32,7 @@ Current implementation includes frontend-only flow with mock adapters:
 - Submit shared password and request upload initialization from ingress API.
 - Upload photo to presigned S3 URL returned by ingress.
 - Poll/read processing state and result metadata via state API.
-- Render extracted face images and related metadata.
+- Render extraction outcome summary (phase 1: `faceCount` only).
 - Render class-wide latest activity feed entries (`latest 200` default).
 
 ## External Interfaces
@@ -89,3 +89,5 @@ Environment variables (Vite):
 Current scope note:
 
 - Activity feed is class-run scoped and uses `MS1`-returned `classRunId` in `ms4` mode.
+- Submit status view reads completed `MS4` result payload and shows green face-count summary when `results.faceCount` is present.
+- Home/Activity feed rows show completed extraction face count (when present in event details) with green success shading.

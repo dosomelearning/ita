@@ -172,6 +172,11 @@ p {
   border-color: #f0c7c7;
 }
 
+.activity-item-completed {
+  background: #eefbf2;
+  border-color: #b9e4c7;
+}
+
 .activity-main {
   min-width: 0;
   display: grid;
@@ -194,6 +199,14 @@ p {
   color: #35506e;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.activity-meta .activity-face-count {
+  font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 900;
+  color: #1c6b38;
+  letter-spacing: normal;
 }
 
 .activity-list-full .activity-item {
@@ -273,6 +286,31 @@ p {
   border-color: #b62929;
   background: #fce7e7;
   color: #8a1f1f;
+}
+
+.faces-count-panel {
+  border: 1px solid #b9e4c7;
+  background: #ecfbf1;
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  text-align: center;
+}
+
+.faces-count-label {
+  margin: 0;
+  color: #2b6d42;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.faces-count-number {
+  margin: 0.1rem 0 0;
+  color: #155f31;
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 900;
 }
 
 .muted {

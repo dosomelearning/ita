@@ -31,4 +31,12 @@ describe("MockStateGateway", () => {
     expect(phases).toContain("processing");
     expect(phases).toContain("failed");
   });
+
+  it("returns faceCount on successful completion", async () => {
+    const gateway = new MockStateGateway();
+    const result = await gateway.awaitJobCompletion("job-test", () => undefined);
+    expect(result.status).toBe("completed");
+    expect(typeof result.faceCount).toBe("number");
+    expect((result.faceCount ?? 0) > 0).toBe(true);
+  });
 });

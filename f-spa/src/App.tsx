@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { type JobPhase } from "./mockGateways";
+import { type ActivityEntry, type JobPhase } from "./mockGateways";
 import { createAuthGateway, createUploadGateway } from "./ingressGateway";
 import { createStateGateway, type StateGateway } from "./stateGateway";
 
@@ -48,6 +48,7 @@ function App() {
   const [activitiesError, setActivitiesError] = useState<string | null>(null);
   const [activitiesUpdatedAt, setActivitiesUpdatedAt] = useState<string | null>(null);
   const [forceFailureNextSubmit, setForceFailureNextSubmit] = useState(false);
+  const [lastFaceCount, setLastFaceCount] = useState<number | null>(null);
 
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const libraryInputRef = useRef<HTMLInputElement | null>(null);
@@ -86,6 +87,7 @@ function App() {
     setSubmitMessage("Ready to submit.");
     setUploadProgress(0);
     setJobPhases(createInitialJobPhases());
+    setLastFaceCount(null);
   }
 
   function onSelectFile(file: File | null) {
@@ -199,9 +201,11 @@ function App() {
       if (finalResult.status === "completed") {
         setSubmitStatus("success");
         setSubmitMessage(`Photo processed successfully for ${nickname.trim()}.`);
+        setLastFaceCount(typeof finalResult.faceCount === "number" ? finalResult.faceCount : null);
       } else {
         setSubmitStatus("failure");
         setSubmitMessage(finalResult.message ?? "Processing failed.");
+        setLastFaceCount(null);
       }
       if (nextClassRunId) {
         void refreshActivities(nextClassRunId);
@@ -301,10 +305,7 @@ function App() {
               {!activitiesLoading && !activitiesError && activities.length > 0 && (
                 <ol className="activity-list">
                   {activities.slice(0, 5).map((item) => (
-                    <li
-                      className={`activity-item ${activityRowClassName(item.statusAfter)}`}
-                      key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}
-                    >
+                    <li className={`activity-item ${activityRowClassName(item)}`} key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}>
                       <div className="activity-main">
                         <strong>{item.nickname}</strong>
                         <small>
@@ -314,6 +315,7 @@ function App() {
                       <div className="activity-meta">
                         <span>{item.producer}</span>
                         <span>{item.statusAfter}</span>
+                        {typeof item.faceCount === "number" && <span className="activity-face-count">{item.faceCount}</span>}
                       </div>
                     </li>
                   ))}
@@ -393,6 +395,12 @@ function App() {
                 <li className={jobPhases.completed ? "active success" : ""}>Completed</li>
                 <li className={jobPhases.failed ? "active error" : ""}>Failed</li>
               </ul>
+              {submitStatus === "success" && lastFaceCount !== null && (
+                <div className="faces-count-panel">
+                  <p className="faces-count-label">Faces Detected</p>
+                  <p className="faces-count-number">{lastFaceCount}</p>
+                </div>
+              )}
             </section>
           </>
         )}
@@ -421,10 +429,7 @@ function App() {
             {!activitiesLoading && !activitiesError && activities.length > 0 && (
               <ol className="activity-list activity-list-full">
                 {activities.map((item) => (
-                  <li
-                    className={`activity-item ${activityRowClassName(item.statusAfter)}`}
-                    key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}
-                  >
+                  <li className={`activity-item ${activityRowClassName(item)}`} key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}>
                     <div className="activity-main">
                       <strong>{item.nickname}</strong>
                       <small>
@@ -434,6 +439,7 @@ function App() {
                     <div className="activity-meta">
                       <span>{item.producer}</span>
                       <span>{item.statusAfter}</span>
+                      {typeof item.faceCount === "number" && <span className="activity-face-count">{item.faceCount}</span>}
                     </div>
                   </li>
                 ))}
@@ -494,9 +500,12 @@ function formatEventTime(eventTime: string): string {
   return parsed.toLocaleTimeString();
 }
 
-function activityRowClassName(statusAfter: JobPhase): string {
-  if (statusAfter === "failed") {
+function activityRowClassName(item: ActivityEntry): string {
+  if (item.statusAfter === "failed") {
     return "activity-item-failed";
+  }
+  if (item.statusAfter === "completed" && typeof item.faceCount === "number") {
+    return "activity-item-completed";
   }
   return "";
 }

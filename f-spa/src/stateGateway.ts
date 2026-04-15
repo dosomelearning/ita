@@ -125,7 +125,7 @@ export class Ms4StateGateway implements StateGateway {
       }
 
       if (status === "completed") {
-        return { status: "completed" };
+        return { status: "completed", faceCount: extractFaceCount(statusResult.payload.results) };
       }
       if (status === "failed") {
         const apiMessage = statusResult.payload.error?.message;
@@ -181,6 +181,7 @@ export class Ms4StateGateway implements StateGateway {
       eventTime: item.eventTime,
       producer: item.producer,
       outcome: item.outcome,
+      faceCount: extractActivityFaceCount(item),
     }));
   }
 
@@ -250,6 +251,41 @@ function formatFetchError(error: unknown): string {
     return `${name}: ${message}`;
   }
   return String(error);
+}
+
+function extractFaceCount(results: Record<string, unknown> | null | undefined): number | undefined {
+  if (!results || typeof results !== "object") {
+    return undefined;
+  }
+  const raw = (results as Record<string, unknown>).faceCount;
+  if (typeof raw === "number" && Number.isInteger(raw) && raw >= 0) {
+    return raw;
+  }
+  const faces = (results as Record<string, unknown>).faces;
+  if (Array.isArray(faces)) {
+    return faces.length;
+  }
+  return undefined;
+}
+
+function extractActivityFaceCount(item: Ms4ActivitiesResponse["items"][number]): number | undefined {
+  const details = item.details;
+  if (!details || typeof details !== "object") {
+    return undefined;
+  }
+  const results = (details as Record<string, unknown>).results;
+  if (!results || typeof results !== "object") {
+    return undefined;
+  }
+  const raw = (results as Record<string, unknown>).faceCount;
+  if (typeof raw === "number" && Number.isInteger(raw) && raw >= 0) {
+    return raw;
+  }
+  const faces = (results as Record<string, unknown>).faces;
+  if (Array.isArray(faces)) {
+    return faces.length;
+  }
+  return undefined;
 }
 
 class MockStateGatewayAdapter implements StateGateway {

@@ -1,1 +1,2 @@
 # Runtime dependencies for ms3-faces.
+Pillow==11.2.1

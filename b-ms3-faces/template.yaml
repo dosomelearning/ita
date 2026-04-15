@@ -1,13 +1,27 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >-
-  ita-ms3-faces SAM scaffold.
+  ita-ms3-faces extraction worker service.
+
+Parameters:
+  ProcessingBucketName:
+    Type: String
+    Default: "ita-data-pxuzz47kqx"
+    Description: Shared processing bucket containing uploaded images and extraction artifacts.
+  FacesExtractionQueueArn:
+    Type: String
+    Default: "arn:aws:sqs:eu-central-1:186388857715:ita-faces-extraction-pxuzz47kqx"
+    Description: ARN of faces extraction SQS queue consumed by MS3.
+  Ms4InternalApiBaseUrl:
+    Type: String
+    Default: "https://90zby48wa9.execute-api.eu-central-1.amazonaws.com"
+    Description: Base URL for MS4 internal API.
 
 Globals:
   Function:
     Runtime: python3.12
-    Timeout: 10
-    MemorySize: 128
+    Timeout: 30
+    MemorySize: 256
     Architectures:
       - x86_64
     Environment:
@@ -22,6 +36,39 @@ Resources:
       FunctionName: !Sub "${AWS::StackName}-faces-handler"
       CodeUri: src/
       Handler: main.handler
+      Environment:
+        Variables:
+          PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
+          MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+              Resource: !Ref FacesExtractionQueueArn
+            - Effect: Allow
+              Action:
+                - s3:GetObject
+              Resource:
+                - !Sub "arn:aws:s3:::${ProcessingBucketName}/processed/faces/*"
+                - !Sub "arn:aws:s3:::${ProcessingBucketName}/rekognition/*"
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/faces/*"
+            - Effect: Allow
+              Action:
+                - execute-api:Invoke
+              Resource: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*/POST/internal/uploads/*/events"
+      Events:
+        FacesExtractionQueue:
+          Type: SQS
+          Properties:
+            Queue: !Ref FacesExtractionQueueArn
+            BatchSize: 1
+            MaximumBatchingWindowInSeconds: 0
 
 Outputs:
   FunctionArn:

@@ -56,7 +56,7 @@ describe("Ms4StateGateway", () => {
       .fn<(...args: [RequestInfo | URL, RequestInit | undefined]) => Promise<Response>>()
       .mockResolvedValueOnce(okResponse({ uploadId: "u1", status: "queued" }))
       .mockResolvedValueOnce(okResponse({ uploadId: "u1", status: "processing" }))
-      .mockResolvedValueOnce(okResponse({ uploadId: "u1", status: "completed" }));
+      .mockResolvedValueOnce(okResponse({ uploadId: "u1", status: "completed", results: { faceCount: 4 } }));
     const gateway = new Ms4StateGateway("https://ita.dosomelearning.com", {
       fetchImpl,
       waitImpl: async () => undefined,
@@ -69,6 +69,7 @@ describe("Ms4StateGateway", () => {
     });
 
     expect(result.status).toBe("completed");
+    expect(result.faceCount).toBe(4);
     expect(phases).toEqual(["queued", "processing", "completed"]);
     expect(fetchImpl).toHaveBeenCalledTimes(3);
   });
@@ -130,6 +131,7 @@ describe("Ms4StateGateway", () => {
               eventTime: "2026-04-15T18:00:00.123Z",
               producer: "ms2",
               outcome: "in_progress",
+              details: {},
             },
           ],
         })
@@ -141,5 +143,33 @@ describe("Ms4StateGateway", () => {
     expect(items).toHaveLength(1);
     expect(items[0].uploadId).toBe("upl-1");
     expect(items[0].outcome).toBe("in_progress");
+    expect(items[0].faceCount).toBeUndefined();
+  });
+
+  it("maps activity face count from details.results", async () => {
+    const fetchImpl = vi
+      .fn<(...args: [RequestInfo | URL, RequestInit | undefined]) => Promise<Response>>()
+      .mockResolvedValue(
+        okResponse({
+          sessionId: "cr-a1",
+          items: [
+            {
+              uploadId: "upl-2",
+              nickname: "ava",
+              eventType: "extraction_completed",
+              statusAfter: "completed",
+              eventTime: "2026-04-15T18:00:00.123Z",
+              producer: "ms3",
+              outcome: "success",
+              details: { results: { faceCount: 6 } },
+            },
+          ],
+        })
+      );
+    const gateway = new Ms4StateGateway("https://ita.dosomelearning.com", { fetchImpl });
+
+    const items = await gateway.getActivities("cr-a1", 20);
+
+    expect(items[0].faceCount).toBe(6);
   });
 });

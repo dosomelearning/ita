@@ -11,6 +11,7 @@ export interface InitUploadResult {
 export interface JobCompletionResult {
   status: "completed" | "failed";
   message?: string;
+  faceCount?: number;
 }
 
 export interface RankingEntry {
@@ -28,6 +29,7 @@ export interface ActivityEntry {
   eventTime: string;
   producer: "ms1" | "ms2" | "ms3";
   outcome: "queued" | "in_progress" | "success" | "failure";
+  faceCount?: number;
 }
 
 function wait(milliseconds: number): Promise<void> {
@@ -101,7 +103,7 @@ export class MockStateGateway {
     }
 
     onPhase("completed");
-    return { status: "completed" };
+    return { status: "completed", faceCount: 3 + Math.floor(Math.random() * 5) };
   }
 
   async getRanking(): Promise<RankingEntry[]> {
@@ -158,6 +160,7 @@ export class MockStateGateway {
               : statusAfter === "queued"
                 ? "queued"
                 : "in_progress",
+        faceCount: statusAfter === "completed" ? 2 + (idx % 5) : undefined,
       };
     });
     return items;
