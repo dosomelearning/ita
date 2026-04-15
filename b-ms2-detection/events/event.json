@@ -1,7 +1,8 @@
 {
-  "scaffold": true,
-  "service": "ms2-detection",
-  "payload": {
-    "example": "event"
-  }
+  "Records": [
+    {
+      "messageId": "msg-1",
+      "body": "{\"Records\":[{\"eventSource\":\"aws:s3\",\"eventName\":\"ObjectCreated:Put\",\"s3\":{\"bucket\":{\"name\":\"ita-data-dev001\"},\"object\":{\"key\":\"uploaded/session-a/upl-1234567890abcd.jpg\"}}}]}"
+    }
+  ]
 }

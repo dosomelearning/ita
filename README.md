@@ -92,6 +92,7 @@ Given the EU context of this project, these constraints are treated as core desi
 - Demonstrate resilient AWS serverless architecture under concurrent class usage.
 - Accept photo uploads from mobile-first frontend flow.
 - Detect faces with Amazon Rekognition.
+- Move source photos out of ingress `uploaded/` prefix after detection into `processed/faces/` or `processed/nofaces/`.
 - Extract each detected face into an individual image artifact.
 - Return processed results for frontend consumption.
 - Enable simple class-oriented ranking/leaderboard scenarios (for example, most faces detected in a photo).

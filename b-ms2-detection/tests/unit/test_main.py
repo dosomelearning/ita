@@ -1,12 +1,53 @@
-import json
+from __future__ import annotations
 
-from src.main import handler
+import pytest
+
+from src import main
 
 
-def test_handler_returns_expected_scaffold_payload():
-    response = handler({"hello": "world"}, None)
+class DummyApi:
+    def __init__(self, service):
+        self.service = service
 
-    assert response["statusCode"] == 200
-    payload = json.loads(response["body"])
-    assert payload["service"] == "ms2-detection"
-    assert payload["message"] == "Scaffold lambda placeholder"
+    def handle(self, event, context):
+        _ = event
+        _ = context
+        return {"ok": True, "service": type(self.service).__name__}
+
+
+class DummyService:
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
+
+class DummyMs4Client:
+    def __init__(self, *, base_url: str, region: str):
+        self.base_url = base_url
+        self.region = region
+
+
+def test_handler_builds_service_and_returns_api_result(monkeypatch):
+    monkeypatch.setenv("PROCESSING_BUCKET_NAME", "ita-data")
+    monkeypatch.setenv("FACES_EXTRACTION_QUEUE_URL", "https://sqs.local/queue")
+    monkeypatch.setenv("MS4_INTERNAL_API_BASE_URL", "https://example.execute-api.eu-central-1.amazonaws.com")
+    monkeypatch.setenv("AWS_REGION", "eu-central-1")
+
+    monkeypatch.setattr(main, "Ms2Api", DummyApi)
+    monkeypatch.setattr(main, "DetectionService", DummyService)
+    monkeypatch.setattr(main, "Ms4Client", DummyMs4Client)
+    monkeypatch.setattr(main.boto3, "client", lambda *args, **kwargs: {"args": args, "kwargs": kwargs})
+
+    response = main.handler({"Records": []}, None)
+
+    assert response["ok"] is True
+    assert response["service"] == "DummyService"
+
+
+def test_handler_raises_when_required_env_missing(monkeypatch):
+    monkeypatch.delenv("PROCESSING_BUCKET_NAME", raising=False)
+    monkeypatch.setenv("FACES_EXTRACTION_QUEUE_URL", "https://sqs.local/queue")
+    monkeypatch.setenv("MS4_INTERNAL_API_BASE_URL", "https://example.execute-api.eu-central-1.amazonaws.com")
+
+    with pytest.raises(RuntimeError) as exc:
+        main.handler({"Records": []}, None)
+    assert "PROCESSING_BUCKET_NAME" in str(exc.value)

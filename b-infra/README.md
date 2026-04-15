@@ -35,6 +35,8 @@ Service-owned compute and API resources are not defined here.
 - One shared processing S3 bucket used across services with prefixes:
   - `uploaded/`
   - `processed/`
+    - `processed/faces/`
+    - `processed/nofaces/`
   - `rekognition/`
   - `faces/`
 - One dedicated access-logs S3 bucket for CloudFront logs (`cloudfront/` prefix).

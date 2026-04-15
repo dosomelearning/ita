@@ -38,6 +38,35 @@ Face extraction microservice.
   - Extracted face image artifacts.
   - Status updates and output references to `b-ms4-statemgr`.
 
+## Queue Contract (Current v1 Consumer Target)
+
+### Inbound: Faces Extraction Queue (`faces-extraction.v1`)
+
+`MS3` is the designated consumer for the `faces-extraction.v1` JSON message body.
+
+Expected required fields:
+
+- `contractVersion` (`faces-extraction.v1`)
+- `uploadId`
+- `sessionId`
+- `sourceBucket`
+- `sourceKey`
+- `detectionArtifactKey`
+- `detectedFaces`
+- `eventTime` (ISO 8601 UTC)
+
+Optional fields:
+
+- `nickname`
+- `trace` (`correlationId`, `requestId`, `producer`)
+
+Consumer rules:
+
+- Reject unsupported `contractVersion` as non-retriable contract error.
+- Treat duplicate deliveries idempotently using `uploadId` + deterministic artifact naming.
+- Read canonical detection metadata from `detectionArtifactKey` before extraction.
+- `sourceKey` is expected to point to moved object under `processed/faces/*` (not `uploaded/*`) after `MS2` post-detection relocation.
+
 ## Non-Functional Requirements
 
 - Idempotent extraction for duplicate queue messages.

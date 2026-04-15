@@ -68,6 +68,7 @@ Markdown snapshot generator:
 | Module | Type | Command | Prereqs | Duration | Notes |
 |---|---|---|---|---|---|
 | `b-ms1-ingress` | Unit | `./b-ms1-ingress/scripts/run_tests.sh` | Conda env `conda_py_env_312` | Short | API/domain/service/handler tests |
+| `b-ms2-detection` | Unit | `./b-ms2-detection/scripts/run_tests.sh` | Conda env `conda_py_env_312` | Short | Queue parser/service flow/API/handler tests |
 | `b-ms4-statemgr` | Unit | `./b-ms4-statemgr/scripts/run_tests.sh` | Conda env `conda_py_env_312` | Short | API/domain/repository/service tests |
 | `b-ms4-statemgr` | Live integration | `MS4_API_BASE_URL=<url> ./b-ms4-statemgr/scripts/run_integration_tests.sh` | Deployed API URL; network | Short | Missing-upload envelope behavior |
 | `f-spa` | Unit | `cd f-spa && npm test` | Node deps installed | Short | Gateway/mode behavior tests |
@@ -144,5 +145,5 @@ Diagnostics are complementary to tests:
   - `test_local.sh` pass
   - `test_live_basic.sh` pass
 - Live e2e (`test_live_e2e.sh`):
-  - `queued` is currently expected and treated as pass while `MS2`/`MS3` are not implemented.
-  - expected behavior will be updated once processing services are live.
+  - `queued` is currently expected and treated as pass while `MS2`/`MS3` runtime deployment is pending.
+  - expected behavior will be updated once processing services are deployed and active.

@@ -32,12 +32,19 @@ sequenceDiagram
         Q1-->>MS2: Deliver message (uploaded image reference)
         MS2->>Rek: DetectFaces(image)
         Rek-->>MS2: Face boxes + detection metadata
-        MS2->>S3: Store detection artifact (rekognition/...)
-        MS2->>MS4: Update processing state (detected/queued)
-        MS2-->>Q2: Publish extraction job (image + boxes refs)
+        alt Faces detected (>0)
+            MS2->>S3: Move source photo to processed/faces/...
+            MS2->>S3: Store detection artifact (rekognition/...) with processed/faces sourceKey
+            MS2->>MS4: Update processing state (detected/processing)
+            MS2-->>Q2: Publish extraction job (processed/faces source + boxes refs)
+        else No faces detected (=0)
+            MS2->>S3: Move source photo to processed/nofaces/...
+            MS2->>S3: Store detection artifact (rekognition/...) with processed/nofaces sourceKey
+            MS2->>MS4: Update failure state (NO_FACES_DETECTED)
+        end
 
         Q2-->>MS3: Deliver extraction message
-        MS3->>S3: Read original image + detection artifact
+        MS3->>S3: Read processed/faces image + detection artifact
         MS3->>S3: Write extracted faces (faces/...)
         MS3->>MS4: Update completion state + result refs
 

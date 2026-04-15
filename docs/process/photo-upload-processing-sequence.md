@@ -10,11 +10,15 @@ The sequence models the complete path from user action in the SPA to final proce
 2. Presigned upload flow to S3 for accepted requests.
 3. Initial workflow state registration in `MS4`.
 4. Asynchronous processing handoff to `MS2` via shared queue.
-5. Face detection in `MS2` using Rekognition and artifact persistence.
-6. Asynchronous extraction handoff to `MS3`.
-7. Face extraction in `MS3` and result writes to S3.
-8. State/result projection in `MS4` for frontend polling.
-9. SPA polling and final result rendering.
+5. Face detection in `MS2` using Rekognition.
+6. Post-detection source photo relocation in `MS2` from `uploaded/` to:
+   - `processed/faces/` when faces were detected.
+   - `processed/nofaces/` when no faces were detected.
+7. Detection artifact persistence in `rekognition/` using relocated source key.
+8. Asynchronous extraction handoff to `MS3` only when faces were detected.
+9. Face extraction in `MS3` and result writes to S3.
+10. State/result projection in `MS4` for frontend polling.
+11. SPA polling and final result rendering.
 
 It also includes the explicit invalid-password rejection branch, which terminates before entering protected upload/processing flow.
 
@@ -34,8 +38,9 @@ Implementation should follow dependency order implied by the sequence:
 4. Implement `MS2` detection worker:
    - Consume upload queue.
    - Run Rekognition detection.
+   - Move processed source photo to `processed/faces` or `processed/nofaces`.
    - Persist detection artifacts.
-   - Update `MS4` state and publish extraction job.
+   - Update `MS4` state and publish extraction job with relocated `sourceKey` when faces were found.
 5. Implement `MS3` extraction worker:
    - Consume extraction queue.
    - Read original image + detection artifacts.
@@ -84,12 +89,19 @@ sequenceDiagram
         Q1-->>MS2: Deliver message (uploaded image reference)
         MS2->>Rek: DetectFaces(image)
         Rek-->>MS2: Face boxes + detection metadata
-        MS2->>S3: Store detection artifact (rekognition/...)
-        MS2->>MS4: Update processing state (detected/queued)
-        MS2-->>Q2: Publish extraction job (image + boxes refs)
+        alt Faces detected (>0)
+            MS2->>S3: Move source photo to processed/faces/...
+            MS2->>S3: Store detection artifact (rekognition/...) with processed/faces sourceKey
+            MS2->>MS4: Update processing state (detected/processing)
+            MS2-->>Q2: Publish extraction job (processed/faces source + boxes refs)
+        else No faces detected (=0)
+            MS2->>S3: Move source photo to processed/nofaces/...
+            MS2->>S3: Store detection artifact (rekognition/...) with processed/nofaces sourceKey
+            MS2->>MS4: Update failure state (NO_FACES_DETECTED)
+        end
 
         Q2-->>MS3: Deliver extraction message
-        MS3->>S3: Read original image + detection artifact
+        MS3->>S3: Read processed/faces image + detection artifact
         MS3->>S3: Write extracted faces (faces/...)
         MS3->>MS4: Update completion state + result refs
 

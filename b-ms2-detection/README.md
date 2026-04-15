@@ -39,6 +39,65 @@ Detection microservice for face detection orchestration.
   - SQS message to faces-extraction queue.
   - Status updates routed to `b-ms4-statemgr`.
 
+## Queue Contract (Current v1 Spec)
+
+### Inbound: Uploaded Photos Queue (`s3-event-v1`)
+
+`MS2` consumes the S3 event envelope received through SQS.
+
+Required fields per record:
+
+- `eventSource == "aws:s3"`
+- `eventName` prefix `ObjectCreated`
+- `s3.bucket.name`
+- `s3.object.key`
+
+Rules:
+
+- `s3.object.key` must match `uploaded/*`; non-matching records are ignored as no-op.
+- URL-decoded key is canonical processing key.
+- Parser tolerates unknown fields for forward compatibility.
+- After detection, `MS2` moves source object from `uploaded/` to:
+  - `processed/faces/{sessionId}/{uploadId}.<ext>` when detected faces > 0
+  - `processed/nofaces/{sessionId}/{uploadId}.<ext>` when detected faces = 0
+- Downstream references (`MS4` details + faces-extraction queue payload) must use moved `processed/*` key, not original `uploaded/*` key.
+
+### Outbound: Faces Extraction Queue (`faces-extraction.v1`)
+
+`MS2` publishes JSON message body to the faces extraction queue.
+
+Required fields:
+
+- `contractVersion` (`faces-extraction.v1`)
+- `uploadId`
+- `sessionId`
+- `sourceBucket`
+- `sourceKey`
+- `detectionArtifactKey`
+- `detectedFaces`
+- `eventTime` (ISO 8601 UTC)
+
+Optional fields:
+
+- `nickname`
+- `trace` (`correlationId`, `requestId`, `producer`)
+
+Emission rule:
+
+- `MS2` publishes extraction job only when at least one face is detected.
+
+## MS4 Event Contract Usage
+
+`MS2` writes to `POST /internal/uploads/{uploadId}/events` with producer `ms2`.
+
+Expected event progression:
+
+- `detection_started` -> `statusAfter: processing`
+- `detection_completed` -> `statusAfter: processing`
+- `detection_failed` -> `statusAfter: failed`
+
+`eventTime` must be ISO 8601 UTC and `details` should include stage metadata (counts, artifact key, and diagnostic-safe failure code when relevant).
+
 ## Non-Functional Requirements
 
 - Idempotent processing for duplicated queue deliveries.
@@ -54,7 +113,5 @@ Detection microservice for face detection orchestration.
 
 ## Open Decisions
 
-- Canonical manifest schema between MS2 and MS3.
-- Error taxonomy and retry policy boundaries.
-- Artifact retention strategy.
-- Queue ownership split if some event resources remain shared in `b-infra`.
+- No-face policy final state before `MS3` rollout (`processing` hold vs terminal `failed` with specific code).
+- Artifact retention lifecycle policy tuning.
