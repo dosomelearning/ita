@@ -9,16 +9,21 @@ The sequence models the complete path from user action in the SPA to final proce
 1. Admission at ingress (`MS1`) with shared password validation against SSM.
 2. Presigned upload flow to S3 for accepted requests.
 3. Initial workflow state registration in `MS4`.
-4. Asynchronous processing handoff to `MS2` via shared queue.
-5. Face detection in `MS2` using Rekognition.
-6. Post-detection source photo relocation in `MS2` from `uploaded/` to:
+4. Initial `MS1` sequence-event writes in `MS4`:
+   - `upload_init_received` with `statusAfter=queued` and pending-upload details.
+   - `upload_url_issued` with `statusAfter=queued` and upload-ready details.
+5. Asynchronous processing handoff to `MS2` via shared queue.
+6. Upload-confirmed event write in `MS2`:
+   - `upload_succeeded` with `statusAfter=queued`, using original S3 notification `eventTime`.
+7. Face detection in `MS2` using Rekognition.
+8. Post-detection source photo relocation in `MS2` from `uploaded/` to:
    - `processed/faces/` when faces were detected.
    - `processed/nofaces/` when no faces were detected.
-7. Detection artifact persistence in `rekognition/` using relocated source key.
-8. Asynchronous extraction handoff to `MS3` only when faces were detected.
-9. Face extraction in `MS3` and result writes to S3.
-10. State/result projection in `MS4` for frontend polling.
-11. SPA polling and final result rendering.
+9. Detection artifact persistence in `rekognition/` using relocated source key.
+10. Asynchronous extraction handoff to `MS3` only when faces were detected.
+11. Face extraction in `MS3` and result writes to S3.
+12. State/result projection in `MS4` for frontend polling.
+13. SPA polling and final result rendering.
 
 It also includes the explicit invalid-password rejection branch, which terminates before entering protected upload/processing flow.
 
@@ -78,15 +83,18 @@ sequenceDiagram
         MS1-->>SPA: 401/403 invalid password
         SPA-->>User: Show failure and stop flow
     else Password valid
-        MS1->>S3: Create presigned PUT URL (uploads/...)
         MS1->>MS4: Register upload-init state (synchronous)
         MS4-->>MS1: State registration acknowledged
+        MS1->>MS4: Record event upload_init_received (queued, pending_upload)
+        MS1->>S3: Create presigned PUT URL (uploads/...)
+        MS1->>MS4: Record event upload_url_issued (queued, upload_ready)
         MS1-->>SPA: Return uploadId + presigned URL + next state hints
 
         SPA->>S3: PUT photo via presigned URL
         S3-->>Q1: Emit upload event to UploadedPhotosQueue
 
         Q1-->>MS2: Deliver message (uploaded image reference)
+        MS2->>MS4: Record event upload_succeeded (queued, S3 eventTime)
         MS2->>Rek: DetectFaces(image)
         Rek-->>MS2: Face boxes + detection metadata
         alt Faces detected (>0)

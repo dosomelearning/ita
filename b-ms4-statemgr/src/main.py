@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 
+import boto3
+
 try:  # Lambda runtime import path
     from api import Ms4Api
     from repository import StateRepository
@@ -12,6 +14,7 @@ except ImportError:  # Unit tests/package import path
     from .service import StateService
 
 _API: Ms4Api | None = None
+_DDB_CLIENT = boto3.client("dynamodb")
 
 
 def handler(event, context):
@@ -26,7 +29,7 @@ def _get_api() -> Ms4Api:
         if not table_name:
             raise RuntimeError("STATE_TABLE_NAME environment variable is required.")
         cloudfront_domain = os.environ.get("CLOUDFRONT_DOMAIN", "")
-        repository = StateRepository(table_name=table_name)
+        repository = StateRepository(table_name=table_name, ddb_client=_DDB_CLIENT)
         service = StateService(repository=repository, cloudfront_domain=cloudfront_domain)
         _API = Ms4Api(service=service)
     return _API

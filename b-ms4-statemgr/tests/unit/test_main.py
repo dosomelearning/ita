@@ -29,8 +29,9 @@ def test_get_api_builds_instance(monkeypatch):
     created = {}
 
     class FakeRepo:
-        def __init__(self, table_name):
+        def __init__(self, table_name, ddb_client):
             created["table_name"] = table_name
+            created["ddb_client"] = ddb_client
 
     class FakeService:
         def __init__(self, repository, cloudfront_domain):
@@ -42,6 +43,7 @@ def test_get_api_builds_instance(monkeypatch):
             created["service"] = service
 
     monkeypatch.setattr(main, "_API", None)
+    monkeypatch.setattr(main, "_DDB_CLIENT", object())
     monkeypatch.setattr(main, "StateRepository", FakeRepo)
     monkeypatch.setattr(main, "StateService", FakeService)
     monkeypatch.setattr(main, "Ms4Api", FakeApi)

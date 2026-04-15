@@ -73,6 +73,11 @@ Consumer rules:
 - Stable output naming to avoid artifact collisions.
 - Clear recoverability path for failed jobs via DLQ replay.
 
+## Mandatory Runtime Rule
+
+- Initialize AWS SDK clients in module-global scope.
+- Do not initialize AWS SDK clients inside Lambda handler code paths.
+
 ## Commands
 
 - Install: `conda run -n conda_py_env_312 python -m pip install -r src/requirements.txt -r tests/requirements.txt`

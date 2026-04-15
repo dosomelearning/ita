@@ -95,7 +95,7 @@ Given the EU context of this project, these constraints are treated as core desi
 - Move source photos out of ingress `uploaded/` prefix after detection into `processed/faces/` or `processed/nofaces/`.
 - Extract each detected face into an individual image artifact.
 - Return processed results for frontend consumption.
-- Enable simple class-oriented ranking/leaderboard scenarios (for example, most faces detected in a photo).
+- Expose a class activity feed (latest mixed pipeline events) to demonstrate concurrent resilient processing behavior.
 
 ## Resilience and Scalability Position
 
@@ -120,7 +120,7 @@ Given the EU context of this project, these constraints are treated as core desi
 - `b-ms1-ingress` - ingress microservice (request admission + presigned URL workflow).
 - `b-ms2-detection` - detection microservice (face detection orchestration).
 - `b-ms3-faces` - face extraction/storage microservice.
-- `b-ms4-statemgr` - state/aggregation microservice (status, ranking, and flow state).
+- `b-ms4-statemgr` - state/aggregation microservice (status, activity feed, and flow state).
 - `f-spa` - React + TypeScript single-page frontend (mobile-first UX).
 - `img` - architecture and supporting diagrams.
 
@@ -159,6 +159,13 @@ Directory names above are canonical and intentionally locked.
 - Frontend: React + TypeScript.
 - Backend: Python 3.12 on AWS SAM.
 - Python environment for automation/agent work: `conda_py_env_312`.
+
+## Lambda Runtime Guardrail (Mandatory)
+
+- Initialize AWS SDK clients (`boto3.client`, `boto3.resource`, sessions, and similar SDK clients) in module-global scope.
+- Do not initialize AWS SDK clients inside Lambda handlers or per-request code paths.
+- Reuse global clients across warm invocations.
+- This rule applies to `MS1`, `MS2`, `MS3`, `MS4`, and any future Lambda services in this repository.
 
 ## Current Status
 

@@ -29,12 +29,6 @@ def test_get_api_requires_env(monkeypatch):
 def test_get_api_builds_dependencies(monkeypatch):
     created = {}
 
-    class FakeBoto3:
-        @staticmethod
-        def client(name, region_name):
-            created[f"client_{name}"] = region_name
-            return object()
-
     class FakeMs4Client:
         def __init__(self, *, base_url, region):
             created["ms4_base_url"] = base_url
@@ -49,7 +43,9 @@ def test_get_api_builds_dependencies(monkeypatch):
             created["api_service"] = service
 
     monkeypatch.setattr(main, "_API", None)
-    monkeypatch.setattr(main, "boto3", FakeBoto3)
+    monkeypatch.setattr(main, "_MS4_CLIENT", None)
+    monkeypatch.setattr(main, "_SSM_CLIENT", object())
+    monkeypatch.setattr(main, "_S3_CLIENT", object())
     monkeypatch.setattr(main, "Ms4Client", FakeMs4Client)
     monkeypatch.setattr(main, "IngressService", FakeService)
     monkeypatch.setattr(main, "IngressApi", FakeApi)
@@ -61,11 +57,10 @@ def test_get_api_builds_dependencies(monkeypatch):
 
     api = main._get_api()
     assert api is not None
-    assert created["client_ssm"] == "eu-central-1"
-    assert created["client_s3"] == "eu-central-1"
     assert created["ms4_base_url"] == "https://ms4.example"
     assert created["service_kwargs"]["processing_bucket_name"] == "ita-data"
     assert created["service_kwargs"]["presign_expires_seconds"] == 900
+    assert created["service_kwargs"]["shared_password_parameter_name"] == "/ita/shared-password"
 
     monkeypatch.setattr(main, "_API", None)
     os.environ.pop("SHARED_PASSWORD_SSM_PARAM", None)

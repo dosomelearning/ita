@@ -75,6 +75,21 @@ class DetectionService:
         self._post_ms4_event(
             upload_id=uploaded.upload_id,
             payload=make_ms4_event(
+                event_type="upload_succeeded",
+                status_after="queued",
+                event_time=uploaded.uploaded_at,
+                details={
+                    "progress": {"stage": "uploaded"},
+                    "sessionId": uploaded.session_id,
+                    "sourceBucket": uploaded.bucket,
+                    "sourceKey": uploaded.key,
+                },
+            ),
+        )
+
+        self._post_ms4_event(
+            upload_id=uploaded.upload_id,
+            payload=make_ms4_event(
                 event_type="detection_started",
                 status_after="processing",
                 details={
@@ -93,6 +108,7 @@ class DetectionService:
             key=processed_key,
             session_id=uploaded.session_id,
             upload_id=uploaded.upload_id,
+            uploaded_at=uploaded.uploaded_at,
         )
         artifact_key = self._store_detection_artifact(uploaded=processed_uploaded, faces=faces)
 

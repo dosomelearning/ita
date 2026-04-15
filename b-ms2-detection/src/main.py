@@ -16,24 +16,16 @@ except ImportError:  # Unit tests/package imports
     from .service import DetectionService
 
 logging.getLogger().setLevel(os.getenv("LOG_LEVEL", "INFO"))
+_API: Ms2Api | None = None
+_MS4_CLIENT: Ms4Client | None = None
+_REGION = os.environ.get("AWS_REGION", "eu-central-1")
+_REKOGNITION_CLIENT = boto3.client("rekognition", region_name=_REGION)
+_S3_CLIENT = boto3.client("s3", region_name=_REGION)
+_SQS_CLIENT = boto3.client("sqs", region_name=_REGION)
 
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
-    region = os.environ.get("AWS_REGION", "eu-central-1")
-    processing_bucket_name = _required_env("PROCESSING_BUCKET_NAME")
-    faces_extraction_queue_url = _required_env("FACES_EXTRACTION_QUEUE_URL")
-    ms4_internal_api_base_url = _required_env("MS4_INTERNAL_API_BASE_URL")
-
-    service = DetectionService(
-        processing_bucket_name=processing_bucket_name,
-        faces_extraction_queue_url=faces_extraction_queue_url,
-        rekognition_client=boto3.client("rekognition", region_name=region),
-        s3_client=boto3.client("s3", region_name=region),
-        sqs_client=boto3.client("sqs", region_name=region),
-        ms4_client=Ms4Client(base_url=ms4_internal_api_base_url, region=region),
-    )
-    api = Ms2Api(service)
-    return api.handle(event, context)
+    return _get_api().handle(event, context)
 
 
 def _required_env(name: str) -> str:
@@ -41,3 +33,25 @@ def _required_env(name: str) -> str:
     if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def _get_api() -> Ms2Api:
+    global _API
+    if _API is None:
+        service = DetectionService(
+            processing_bucket_name=_required_env("PROCESSING_BUCKET_NAME"),
+            faces_extraction_queue_url=_required_env("FACES_EXTRACTION_QUEUE_URL"),
+            rekognition_client=_REKOGNITION_CLIENT,
+            s3_client=_S3_CLIENT,
+            sqs_client=_SQS_CLIENT,
+            ms4_client=_get_ms4_client(),
+        )
+        _API = Ms2Api(service)
+    return _API
+
+
+def _get_ms4_client() -> Ms4Client:
+    global _MS4_CLIENT
+    if _MS4_CLIENT is None:
+        _MS4_CLIENT = Ms4Client(base_url=_required_env("MS4_INTERNAL_API_BASE_URL"), region=_REGION)
+    return _MS4_CLIENT

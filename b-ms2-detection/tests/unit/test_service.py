@@ -59,13 +59,14 @@ class FakeMs4Client:
         return self.status, {"ok": self.status < 300}
 
 
-def _s3_event_body(key: str = "uploaded/s-1/upl-1.jpg") -> str:
+def _s3_event_body(key: str = "uploaded/s-1/upl-1.jpg", event_time: str = "2026-04-15T11:22:33Z") -> str:
     return json.dumps(
         {
             "Records": [
                 {
                     "eventSource": "aws:s3",
                     "eventName": "ObjectCreated:Put",
+                    "eventTime": event_time,
                     "s3": {
                         "bucket": {"name": "ita-data-bucket"},
                         "object": {"key": key},
@@ -93,9 +94,12 @@ def test_process_record_success_with_faces_enqueues_ms3_job():
     result = service.process_sqs_record(body=_s3_event_body(), message_id="msg-1")
 
     assert result["processed"] == 1
-    assert len(service._ms4.calls) == 2
-    assert service._ms4.calls[0][1]["eventType"] == "detection_started"
-    assert service._ms4.calls[1][1]["eventType"] == "detection_completed"
+    assert len(service._ms4.calls) == 3
+    assert service._ms4.calls[0][1]["eventType"] == "upload_succeeded"
+    assert service._ms4.calls[0][1]["statusAfter"] == "queued"
+    assert service._ms4.calls[0][1]["eventTime"] == "2026-04-15T11:22:33.000Z"
+    assert service._ms4.calls[1][1]["eventType"] == "detection_started"
+    assert service._ms4.calls[2][1]["eventType"] == "detection_completed"
     assert len(service._s3.put_calls) == 1
     artifact_payload = json.loads(service._s3.put_calls[0]["Body"].decode("utf-8"))
     assert artifact_payload["sourceKey"] == "processed/faces/s-1/upl-1.jpg"
@@ -103,7 +107,7 @@ def test_process_record_success_with_faces_enqueues_ms3_job():
     assert service._s3.copy_calls[0]["Key"] == "processed/faces/s-1/upl-1.jpg"
     assert len(service._s3.delete_calls) == 1
     assert service._s3.delete_calls[0]["Key"] == "uploaded/s-1/upl-1.jpg"
-    assert service._ms4.calls[1][1]["details"]["sourceKey"] == "processed/faces/s-1/upl-1.jpg"
+    assert service._ms4.calls[2][1]["details"]["sourceKey"] == "processed/faces/s-1/upl-1.jpg"
     assert len(service._sqs.messages) == 1
     msg_body = json.loads(service._sqs.messages[0]["MessageBody"])
     assert msg_body["contractVersion"] == "faces-extraction.v1"
@@ -116,7 +120,8 @@ def test_process_record_with_no_faces_marks_failed_and_no_enqueue():
     result = service.process_sqs_record(body=_s3_event_body(), message_id="msg-2")
 
     assert result["processed"] == 1
-    assert len(service._ms4.calls) == 3
+    assert len(service._ms4.calls) == 4
+    assert service._ms4.calls[0][1]["eventType"] == "upload_succeeded"
     assert service._ms4.calls[-1][1]["eventType"] == "detection_failed"
     assert service._ms4.calls[-1][1]["details"]["sourceKey"] == "processed/nofaces/s-1/upl-1.jpg"
     artifact_payload = json.loads(service._s3.put_calls[0]["Body"].decode("utf-8"))

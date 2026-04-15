@@ -27,6 +27,11 @@ class DummyMs4Client:
 
 
 def test_handler_builds_service_and_returns_api_result(monkeypatch):
+    monkeypatch.setattr(main, "_API", None)
+    monkeypatch.setattr(main, "_MS4_CLIENT", None)
+    monkeypatch.setattr(main, "_REKOGNITION_CLIENT", object())
+    monkeypatch.setattr(main, "_S3_CLIENT", object())
+    monkeypatch.setattr(main, "_SQS_CLIENT", object())
     monkeypatch.setenv("PROCESSING_BUCKET_NAME", "ita-data")
     monkeypatch.setenv("FACES_EXTRACTION_QUEUE_URL", "https://sqs.local/queue")
     monkeypatch.setenv("MS4_INTERNAL_API_BASE_URL", "https://example.execute-api.eu-central-1.amazonaws.com")
@@ -35,7 +40,6 @@ def test_handler_builds_service_and_returns_api_result(monkeypatch):
     monkeypatch.setattr(main, "Ms2Api", DummyApi)
     monkeypatch.setattr(main, "DetectionService", DummyService)
     monkeypatch.setattr(main, "Ms4Client", DummyMs4Client)
-    monkeypatch.setattr(main.boto3, "client", lambda *args, **kwargs: {"args": args, "kwargs": kwargs})
 
     response = main.handler({"Records": []}, None)
 
@@ -44,6 +48,8 @@ def test_handler_builds_service_and_returns_api_result(monkeypatch):
 
 
 def test_handler_raises_when_required_env_missing(monkeypatch):
+    monkeypatch.setattr(main, "_API", None)
+    monkeypatch.setattr(main, "_MS4_CLIENT", None)
     monkeypatch.delenv("PROCESSING_BUCKET_NAME", raising=False)
     monkeypatch.setenv("FACES_EXTRACTION_QUEUE_URL", "https://sqs.local/queue")
     monkeypatch.setenv("MS4_INTERNAL_API_BASE_URL", "https://example.execute-api.eu-central-1.amazonaws.com")

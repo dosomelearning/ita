@@ -33,10 +33,11 @@ class UploadedObject:
     key: str
     session_id: str
     upload_id: str
+    uploaded_at: str
 
 
 def utc_now_iso() -> str:
-    return datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(tz=timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def parse_sqs_body(body: str) -> list[dict[str, Any]]:
@@ -114,7 +115,15 @@ def parse_uploaded_object(record: dict[str, Any]) -> UploadedObject:
             details={"key": key},
         )
 
-    return UploadedObject(bucket=bucket.strip(), key=key, session_id=session_id, upload_id=upload_id)
+    event_time_raw = record.get("eventTime")
+    uploaded_at = _normalize_event_time(event_time_raw)
+    return UploadedObject(
+        bucket=bucket.strip(),
+        key=key,
+        session_id=session_id,
+        upload_id=upload_id,
+        uploaded_at=uploaded_at,
+    )
 
 
 def make_ms4_event(
@@ -122,11 +131,24 @@ def make_ms4_event(
     event_type: str,
     status_after: str,
     details: dict[str, Any],
+    event_time: str | None = None,
 ) -> dict[str, Any]:
     return {
         "eventType": event_type,
-        "eventTime": utc_now_iso(),
+        "eventTime": event_time or utc_now_iso(),
         "producer": "ms2",
         "statusAfter": status_after,
         "details": details,
     }
+
+
+def _normalize_event_time(value: Any) -> str:
+    if not isinstance(value, str) or not value.strip():
+        return utc_now_iso()
+    raw = value.strip()
+    normalized = raw[:-1] + "+00:00" if raw.endswith("Z") else raw
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError:
+        return utc_now_iso()
+    return parsed.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")

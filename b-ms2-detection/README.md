@@ -92,6 +92,7 @@ Emission rule:
 
 Expected event progression:
 
+- `upload_succeeded` -> `statusAfter: queued` (uses original S3 notification `eventTime`)
 - `detection_started` -> `statusAfter: processing`
 - `detection_completed` -> `statusAfter: processing`
 - `detection_failed` -> `statusAfter: failed`
@@ -103,6 +104,11 @@ Expected event progression:
 - Idempotent processing for duplicated queue deliveries.
 - Deterministic handling of partial/failed Rekognition runs.
 - Structured logs/metrics and error classification for DLQ triage.
+
+## Mandatory Runtime Rule
+
+- Initialize AWS SDK clients in module-global scope.
+- Do not initialize AWS SDK clients inside Lambda handler code paths.
 
 ## Commands
 

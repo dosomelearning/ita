@@ -21,15 +21,18 @@ sequenceDiagram
         MS1-->>SPA: 401/403 invalid password
         SPA-->>User: Show failure and stop flow
     else Password valid
-        MS1->>S3: Create presigned PUT URL (uploads/...)
         MS1->>MS4: Register upload-init state (synchronous)
         MS4-->>MS1: State registration acknowledged
+        MS1->>MS4: Record event upload_init_received (queued, pending_upload)
+        MS1->>S3: Create presigned PUT URL (uploads/...)
+        MS1->>MS4: Record event upload_url_issued (queued, upload_ready)
         MS1-->>SPA: Return uploadId + presigned URL + next state hints
 
         SPA->>S3: PUT photo via presigned URL
         S3-->>Q1: Emit upload event to UploadedPhotosQueue
 
         Q1-->>MS2: Deliver message (uploaded image reference)
+        MS2->>MS4: Record event upload_succeeded (queued, S3 eventTime)
         MS2->>Rek: DetectFaces(image)
         Rek-->>MS2: Face boxes + detection metadata
         alt Faces detected (>0)

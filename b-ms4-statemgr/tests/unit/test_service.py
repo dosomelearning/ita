@@ -49,6 +49,12 @@ class InMemoryRepository:
         matching.sort(key=lambda item: item.get("gsi2sk", ""), reverse=True)
         return deepcopy(matching[:limit])
 
+    def list_session_activities(self, *, session_id: str, limit: int = 20):
+        expected_pk = f"FEED#CLASS#{session_id}"
+        matching = [event for event in self.events.values() if event.get("gsi3pk") == expected_pk]
+        matching.sort(key=lambda item: item.get("gsi3sk", ""), reverse=True)
+        return deepcopy(matching[:limit])
+
 
 def make_service(cloudfront_domain: str = "d111111abcdef8.cloudfront.net") -> StateService:
     return StateService(repository=InMemoryRepository(), cloudfront_domain=cloudfront_domain)
@@ -136,6 +142,30 @@ def test_record_processing_event_updates_state():
     assert result["progress"]["stage"] == "detection_done"
 
 
+def test_record_ms1_sequence_event_keeps_queued_state():
+    service = make_service()
+    service.register_upload_init(
+        {
+            "uploadId": "u-1",
+            "sessionId": "s-1",
+            "nickname": "Alice",
+            "submittedAt": "2026-04-14T10:00:00Z",
+            "source": "spa",
+        }
+    )
+    result = service.record_processing_event(
+        "u-1",
+        {
+            "eventType": "upload_init_received",
+            "eventTime": "2026-04-14T10:00:01Z",
+            "producer": "ms1",
+            "statusAfter": "queued",
+            "details": {"phase": "pending_upload", "uploadReady": False},
+        },
+    )
+    assert result["status"] == "queued"
+
+
 def test_record_completed_event_builds_cloudfront_urls():
     service = make_service("https://demo.cloudfront.net")
     service.register_upload_init(
@@ -200,7 +230,7 @@ def test_record_event_duplicate_is_idempotent():
     second = service.record_processing_event("u-1", payload)
     assert first["status"] == "processing"
     assert second["status"] == "processing"
-    event_sk = build_event_sk("2026-04-14T10:01:00Z", "detection_completed", "ms2")
+    event_sk = build_event_sk("2026-04-14T10:01:00.000Z", "detection_completed", "ms2")
     assert ("u-1", event_sk) in repo.events
 
 
@@ -237,3 +267,43 @@ def test_get_participant_uploads_returns_newest_first():
     assert len(result["items"]) == 2
     assert result["items"][0]["uploadId"] == "u-2"
     assert result["items"][1]["uploadId"] == "u-1"
+
+
+def test_get_session_activities_returns_newest_first_with_outcome_mapping():
+    service = make_service()
+    service.register_upload_init(
+        {
+            "uploadId": "u-1",
+            "sessionId": "cr-1",
+            "nickname": "Alice",
+            "submittedAt": "2026-04-14T10:00:00Z",
+            "source": "spa",
+        }
+    )
+    service.record_processing_event(
+        "u-1",
+        {
+            "eventType": "detection_completed",
+            "eventTime": "2026-04-14T10:01:00.100Z",
+            "producer": "ms2",
+            "statusAfter": "processing",
+            "details": {},
+        },
+    )
+    service.record_processing_event(
+        "u-1",
+        {
+            "eventType": "detection_failed",
+            "eventTime": "2026-04-14T10:01:00.200Z",
+            "producer": "ms2",
+            "statusAfter": "failed",
+            "details": {"error": {"code": "NO_FACES_DETECTED"}},
+        },
+    )
+
+    result = service.get_session_activities(session_id="cr-1", limit=20)
+    assert result["sessionId"] == "cr-1"
+    assert len(result["items"]) == 2
+    assert result["items"][0]["eventType"] == "detection_failed"
+    assert result["items"][0]["outcome"] == "failure"
+    assert result["items"][1]["outcome"] == "in_progress"

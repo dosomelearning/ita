@@ -28,7 +28,7 @@ State and aggregation microservice.
 - Maintain processing state in DynamoDB.
 - Serve frontend-readable references/URLs/metadata for completed jobs.
 - Accept and apply status updates from upstream processing stages.
-- Provide data foundations for class-oriented ranking/leaderboard views.
+- Provide class-wide latest-activity feed read model for SPA.
 
 ## Functional Specification (Pre-Implementation)
 
@@ -48,7 +48,10 @@ The sections below define the implementation target for the first MS4 delivery s
   - Purpose: polling/read model for SPA async workflow UI.
 - Frontend participant history read:
   - `GET /v1/sessions/{sessionId}/participants/{nickname}/uploads`
-  - Purpose: fetch participant upload history for session-scoped UI and ranking foundations.
+  - Purpose: fetch participant upload history for session-scoped user timeline.
+- Frontend session activity feed read:
+  - `GET /v1/sessions/{sessionId}/activities`
+  - Purpose: fetch latest session event activities (default latest 20) for activity-feed UI.
 
 ### Internal API Authentication
 
@@ -68,6 +71,7 @@ The sections below define the implementation target for the first MS4 delivery s
   - `POST /internal/uploads/{uploadId}/events`
   - `GET /v1/uploads/{uploadId}/status`
   - `GET /v1/sessions/{sessionId}/participants/{nickname}/uploads`
+  - `GET /v1/sessions/{sessionId}/activities`
 - Keep internal and frontend route handlers logically separated to prevent policy leakage.
 
 ### Canonical State Machine
@@ -106,9 +110,15 @@ Event write required fields:
 
 - `eventType`
 - `eventTime` (ISO 8601)
-- `producer` (`ms2` or `ms3`)
+- `producer` (`ms1`, `ms2`, or `ms3`)
 - `statusAfter`
 - `details` (optional object)
+
+Producer/status contract baseline:
+
+- `ms1` emits pre-upload admission events with `statusAfter: queued` (for example `upload_init_received`, `upload_url_issued`).
+- `ms2` emits `upload_succeeded` with `statusAfter: queued`, then detection lifecycle events (`processing`/`failed`).
+- `ms3` emits extraction terminal events (`completed`/`failed`).
 
 Status read response fields:
 
@@ -125,6 +135,21 @@ Participant history response fields:
 - `nickname`
 - `participantId`
 - `items` (array of status-read-shape objects)
+
+Session activity feed response fields:
+
+- `sessionId`
+- `items` (array, newest first)
+- Activity item baseline fields:
+  - `uploadId`
+  - `nickname`
+  - `participantId`
+  - `eventType`
+  - `statusAfter`
+  - `eventTime`
+  - `producer`
+  - `outcome` (`queued|in_progress|success|failure`)
+  - `details` (optional)
 
 ### Result Reference Format
 
@@ -195,6 +220,11 @@ Current implementation direction:
   - `gsi2sk = SUBMITTED#<submittedAt>#UPLOAD#<uploadId>`
   - Intent: session-scoped participant history (class session boundary).
   - Consequence: same participant across multiple sessions is intentionally separated.
+- `GSI3` supports session activity feed query:
+  - `gsi3pk = FEED#CLASS#<classRunId>`
+  - `gsi3sk = E#<eventTimeMs>#U#<uploadId>#T#<eventType>`
+  - Query mode: descending (`ScanIndexForward=false`) with bounded limit (`<=50`, default `20`).
+  - Intent: no-scan latest-session activities for SPA feed.
 
 Mandatory runtime access constraint:
 
@@ -228,6 +258,11 @@ Each write/read path should log:
 - State transitions must be explicit and auditable.
 - Read model should tolerate eventual consistency in async workflow stages.
 
+## Mandatory Runtime Rule
+
+- Initialize AWS SDK clients in module-global scope.
+- Do not initialize AWS SDK clients inside Lambda handler code paths.
+
 ## Commands
 
 - Install: `conda run -n conda_py_env_312 python -m pip install -r src/requirements.txt -r tests/requirements.txt`
@@ -236,12 +271,18 @@ Each write/read path should log:
 - Lint: `conda run -n conda_py_env_312 python -m ruff check src tests`
 - Run: `sam build --template-file template.yaml`
 
+## Deployment Parameters
+
+`MS4` template parameters are configured in `b-ms4-statemgr/samconfig.toml` under:
+
+- `[default.deploy.parameters].parameter_overrides`
+
+Current overrides include:
+
+- `CloudFrontDomain`
+
 ## Open Decisions
 
-- Leaderboard aggregation model and refresh strategy.
+- Whether init registration should also emit explicit `EVENT` item for feed completeness.
 - State table ownership split (service-owned by MS4 vs explicitly shared table in `b-infra`).
-- Global participant history across sessions:
-  - If needed, add a dedicated index (for example `GSI3`) with:
-    - `gsi3pk = PARTICIPANT#<participantId>`
-    - `gsi3sk = SESSION#<sessionId>#SUBMITTED#<submittedAt>#UPLOAD#<uploadId>`
-  - Keep `GSI2` as session-scoped read model for in-session ranking and user history.
+- Global participant history across sessions (if needed, add dedicated participant-global index while keeping current feed/history indexes stable).

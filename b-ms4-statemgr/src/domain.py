@@ -46,7 +46,7 @@ class EventRequest:
 
 
 def utc_now_iso() -> str:
-    return datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(tz=timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def parse_iso8601(value: str) -> str:
@@ -68,7 +68,7 @@ def parse_iso8601(value: str) -> str:
             status_code=400,
             details={"value": value},
         ) from exc
-    return parsed.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return parsed.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def validate_init_payload(payload: dict[str, Any]) -> InitRequest:
@@ -107,10 +107,10 @@ def validate_event_payload(upload_id: str, payload: dict[str, Any]) -> EventRequ
             status_code=400,
             details={"field": "details"},
         )
-    if producer not in {"ms2", "ms3"}:
+    if producer not in {"ms1", "ms2", "ms3"}:
         raise DomainError(
             code="VALIDATION_ERROR",
-            message="producer must be one of: ms2, ms3.",
+            message="producer must be one of: ms1, ms2, ms3.",
             status_code=400,
             details={"producer": producer},
         )
@@ -121,7 +121,11 @@ def validate_event_payload(upload_id: str, payload: dict[str, Any]) -> EventRequ
             status_code=400,
             details={"statusAfter": status_after},
         )
-    allowed_by_producer = {"ms2": {"processing", "failed"}, "ms3": {"completed", "failed"}}[producer]
+    allowed_by_producer = {
+        "ms1": {"queued"},
+        "ms2": {"queued", "processing", "failed"},
+        "ms3": {"completed", "failed"},
+    }[producer]
     if status_after not in allowed_by_producer:
         raise DomainError(
             code="VALIDATION_ERROR",
@@ -149,7 +153,7 @@ def assert_transition_allowed(current_status: str, next_status: str) -> None:
             details={"currentStatus": current_status},
         )
     allowed_map = {
-        "queued": {"processing", "failed"},
+        "queued": {"queued", "processing", "failed"},
         "processing": {"processing", "completed", "failed"},
         "completed": set(),
         "failed": set(),
@@ -166,6 +170,14 @@ def assert_transition_allowed(current_status: str, next_status: str) -> None:
 
 def build_event_sk(event_time: str, event_type: str, producer: str) -> str:
     return f"EVENT#{event_time}#{event_type}#{producer}"
+
+
+def build_activity_gsi3pk(session_id: str) -> str:
+    return f"FEED#CLASS#{session_id}"
+
+
+def build_activity_gsi3sk(event_time: str, upload_id: str, event_type: str) -> str:
+    return f"E#{event_time}#U#{upload_id}#T#{event_type}"
 
 
 def build_participant_id(nickname: str) -> str:

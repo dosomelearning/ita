@@ -61,6 +61,11 @@ Validation baseline:
 - `password`, `nickname`, `sessionId`, `contentType` must be non-empty strings.
 - Reject unsupported content types with explicit validation error.
 
+Class-run grouping note:
+
+- `MS1` derives canonical `classRunId` from validated class code and uses it for backend grouping (`MS4` session id + S3 key path).
+- Raw class code is not propagated as runtime grouping identifier.
+
 ### Admission and Password Validation
 
 - Password source is SSM Parameter Store (configured by env var parameter name).
@@ -77,7 +82,7 @@ On successful admission:
 - Generate `uploadId` in `MS1`.
 - Build canonical object key under shared processing bucket:
   - Prefix: `uploaded/`
-  - Include `sessionId` and `uploadId` in key path.
+  - Include derived `classRunId` and `uploadId` in key path.
 - Generate presigned `PUT` URL with bounded expiry.
 - Include required upload headers in response (`Content-Type` and any required metadata headers).
 
@@ -95,7 +100,7 @@ Before returning success to SPA, `MS1` must call:
 Init payload baseline:
 
 - `uploadId`
-- `sessionId`
+- `sessionId` (set to derived `classRunId`)
 - `submittedAt` (ISO 8601)
 - `source` (`spa`)
 - `nickname` (forwarded as optional metadata field)
@@ -103,6 +108,9 @@ Init payload baseline:
 Consistency rule:
 
 - If `MS4` init registration fails, `MS1` must fail the request (retriable error), and must not return a success upload-init response.
+- After init registration, `MS1` records ordered sequence events in `MS4`:
+  - `upload_init_received` (`producer=ms1`, `statusAfter=queued`, `details.phase=pending_upload`)
+  - `upload_url_issued` (`producer=ms1`, `statusAfter=queued`, `details.phase=upload_ready`)
 
 ### Success Response Contract
 
@@ -110,6 +118,7 @@ Response baseline fields:
 
 - `accepted: true`
 - `uploadId`
+- `classRunId`
 - `uploadUrl` (presigned URL)
 - `uploadMethod` (`PUT`)
 - `uploadHeaders` (required request headers)
@@ -185,6 +194,11 @@ Log fields per request:
 - API Gateway rate limiting is mandatory.
 - Validation failure paths must be explicit and auditable.
 - Keep credentials out of repo; use AWS profile-based auth for local tooling.
+
+## Mandatory Runtime Rule
+
+- Initialize AWS SDK clients in module-global scope.
+- Do not initialize AWS SDK clients inside Lambda handler code paths.
 
 ## Commands
 

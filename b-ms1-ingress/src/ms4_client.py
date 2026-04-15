@@ -18,6 +18,13 @@ class Ms4Client:
 
     def register_upload_init(self, payload: dict[str, Any]) -> tuple[int, dict[str, Any] | None]:
         url = f"{self._base_url}/internal/uploads/init"
+        return self._post_json(url=url, payload=payload)
+
+    def post_event(self, *, upload_id: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any] | None]:
+        url = f"{self._base_url}/internal/uploads/{upload_id}/events"
+        return self._post_json(url=url, payload=payload)
+
+    def _post_json(self, *, url: str, payload: dict[str, Any]) -> tuple[int, dict[str, Any] | None]:
         body = json.dumps(payload).encode("utf-8")
         headers = {"Content-Type": "application/json", "Host": _host_from_url(url)}
 
@@ -27,12 +34,7 @@ class Ms4Client:
             raise RuntimeError("Unable to obtain AWS credentials for MS4 signed request.")
         SigV4Auth(credentials, "execute-api", self._region).add_auth(aws_request)
 
-        request = urllib.request.Request(
-            url=url,
-            method="POST",
-            data=body,
-            headers=dict(aws_request.headers.items()),
-        )
+        request = urllib.request.Request(url=url, method="POST", data=body, headers=dict(aws_request.headers.items()))
         try:
             with urllib.request.urlopen(request, timeout=10) as response:
                 response_body = response.read().decode("utf-8")

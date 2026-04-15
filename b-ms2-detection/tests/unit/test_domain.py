@@ -23,6 +23,7 @@ def test_parse_uploaded_object_success():
         {
             "eventSource": "aws:s3",
             "eventName": "ObjectCreated:Put",
+            "eventTime": "2026-04-15T10:20:30Z",
             "s3": {
                 "bucket": {"name": "ita-data-bucket"},
                 "object": {"key": "uploaded%2Fclass-a%2Fupl-1234.jpg"},
@@ -33,6 +34,7 @@ def test_parse_uploaded_object_success():
     assert uploaded.key == "uploaded/class-a/upl-1234.jpg"
     assert uploaded.session_id == "class-a"
     assert uploaded.upload_id == "upl-1234"
+    assert uploaded.uploaded_at == "2026-04-15T10:20:30.000Z"
 
 
 def test_parse_uploaded_object_ignores_non_uploaded_prefix():
