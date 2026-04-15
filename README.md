@@ -12,6 +12,7 @@ Serverless demo application for classroom-scale photo ingestion and face extract
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) (architecture decisions and rationale)
 - [`docs/README.md`](docs/README.md) (project documentation map)
 - [`docs/system-checklist.md`](docs/system-checklist.md) (system-wide task tracker)
+- [`docs/testing/README.md`](docs/testing/README.md) (centralized testing and diagnostics strategy)
 - [`b-infra/README.md`](b-infra/README.md)
 - [`b-ms1-ingress/README.md`](b-ms1-ingress/README.md)
 - [`b-ms2-detection/README.md`](b-ms2-detection/README.md)
@@ -41,6 +42,7 @@ Note: in markdown-capable viewers, the module `README.md` entries below are **cl
 3. System docs in `docs/` for execution tracking:
    - [`docs/README.md`](docs/README.md)
    - [`docs/system-checklist.md`](docs/system-checklist.md)
+   - [`docs/testing/README.md`](docs/testing/README.md)
 4. Module-level `README.md` files for implementation details:
    - [`b-infra/README.md`](b-infra/README.md)
    - [`b-ms1-ingress/README.md`](b-ms1-ingress/README.md)

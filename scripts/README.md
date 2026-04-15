@@ -2,6 +2,35 @@
 
 This document describes usage syntax for root-level helper scripts under `scripts/`.
 
+## Testing and Smoke Checks
+
+Centralized testing and diagnostics strategy is documented in:
+
+- [`../docs/testing/README.md`](../docs/testing/README.md)
+
+Primary test runner entrypoints:
+
+- `./scripts/test_local.sh` - local deterministic baseline
+- `./scripts/test_live_basic.sh` - live contract/envelope checks
+- `./scripts/test_live_e2e.sh` - optional live e2e smoke (`MS1` init + upload + `MS4` poll)
+- `./scripts/smoke_check.sh` - tier orchestrator (`local`, `live-basic`, `live-e2e`, `all`)
+- `./scripts/test_all.sh` - alias for `smoke_check --tier all`
+- `./scripts/render_test_snapshot.sh` - render markdown snapshot from latest JSON test reports
+
+Central test config files:
+
+- `./scripts/testing.env` - local source of truth for endpoints (not tracked)
+- `./scripts/testing.env.local` - optional local overrides
+- `./scripts/testing.env.example` - tracked template with empty values
+
+All testing scripts write JSON summaries under:
+
+- `tmp/test-reports/`
+
+Default snapshot output:
+
+- `docs/testing/latest-manual-run.md`
+
 ## CloudFormation Stack Inspection
 
 The stack inspection helpers are read-only wrappers around AWS CloudFormation `describe-*` APIs.

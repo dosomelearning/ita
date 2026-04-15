@@ -55,6 +55,8 @@ coverage/
 .env.*
 !.env.example
 *.local
+scripts/testing.env
+scripts/testing.env.local
 
 # Local infra parameter files (keep real account/environment values out of git)
 b-infra/params/*.json

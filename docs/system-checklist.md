@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-026`
+Last Issued ID: `T-027`
 
 ## Rules
 
@@ -35,3 +35,4 @@ Last Issued ID: `T-026`
 | [T-024](tasks/T-024-implement-ms1-ingress-upload-init-flow.md) | in_progress | Backend | Implement `MS1` upload-init API flow: password validation via SSM, presigned URL issuance, and mandatory sync init registration in `MS4`. | `b-ms1-ingress/src/main.py`, `b-ms1-ingress/src/api.py`, `b-ms1-ingress/src/domain.py`, `b-ms1-ingress/src/service.py`, `b-ms1-ingress/src/ms4_client.py`, `b-ms1-ingress/template.yaml`, `b-ms1-ingress/tests/unit/test_domain.py`, `b-ms1-ingress/tests/unit/test_service.py`, `b-ms1-ingress/tests/unit/test_api.py`, `b-ms1-ingress/tests/unit/test_main.py`, `tasks/T-024-implement-ms1-ingress-upload-init-flow.md` | In progress; implementation and tests completed locally, awaiting integrated flow wiring with real SPA/MS1 calls |
 | [T-025](tasks/T-025-wire-f-spa-to-ms1-upload-init-and-presigned-upload.md) | in_progress | Frontend | Wire SPA submit flow to real `MS1` upload-init API and presigned S3 upload path with runtime-selectable gateway mode and mock fallback. | `f-spa/src/App.tsx`, `f-spa/src/ingressGateway.ts`, `f-spa/src/ingressGateway.test.ts`, `f-spa/src/mockGateways.ts`, `f-spa/.env.example`, `f-spa/README.md`, `tasks/T-025-wire-f-spa-to-ms1-upload-init-and-presigned-upload.md` | In progress; replace mock init/upload path while preserving local mock mode for development |
 | [T-026](tasks/T-026-add-ms4-participant-history-query-model.md) | in_progress | Backend | Extend `MS4` state model with participant identity and add queryable per-participant upload history endpoint (no DynamoDB scans). | `b-ms4-statemgr/src/domain.py`, `b-ms4-statemgr/src/service.py`, `b-ms4-statemgr/src/repository.py`, `b-ms4-statemgr/src/api.py`, `b-ms4-statemgr/template.yaml`, `b-ms4-statemgr/tests/unit/*.py`, `b-ms4-statemgr/README.md`, `tasks/T-026-add-ms4-participant-history-query-model.md` | In progress; needed to support user history and ranking foundations |
+| [T-027](tasks/T-027-centralize-testing-and-diagnostics-strategy.md) | in_progress | Quality | Centralize project-wide testing and diagnostics strategy with visible docs and root runner scripts for local, live-basic, and smoke checks. | `README.md`, `docs/README.md`, `docs/testing/README.md`, `scripts/README.md`, `scripts/test_local.sh`, `scripts/test_live_basic.sh`, `scripts/test_live_e2e.sh`, `scripts/smoke_check.sh`, `scripts/test_all.sh`, `tasks/T-027-centralize-testing-and-diagnostics-strategy.md` | In progress; establish single source of truth and centralized runnable checks |
