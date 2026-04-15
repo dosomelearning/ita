@@ -30,7 +30,7 @@ interface Ms4ActivitiesResponse {
     eventType: string;
     statusAfter: JobPhase;
     eventTime: string;
-    producer: "ms2" | "ms3";
+    producer: "ms1" | "ms2" | "ms3";
     outcome: "queued" | "in_progress" | "success" | "failure";
     details?: Record<string, unknown>;
   }>;
@@ -148,7 +148,7 @@ export class Ms4StateGateway implements StateGateway {
     return this.rankingGateway.getRanking();
   }
 
-  async getActivities(classRunId: string, limit = 20): Promise<ActivityEntry[]> {
+  async getActivities(classRunId: string, limit = 200): Promise<ActivityEntry[]> {
     const endpoint = `${this.ms4BaseUrl}/v1/sessions/${encodeURIComponent(classRunId)}/activities?limit=${encodeURIComponent(
       String(limit)
     )}`;
@@ -263,7 +263,7 @@ class MockStateGatewayAdapter implements StateGateway {
     return this.gateway.getRanking();
   }
 
-  getActivities(classRunId: string, limit = 20): Promise<ActivityEntry[]> {
+  getActivities(classRunId: string, limit = 200): Promise<ActivityEntry[]> {
     return this.gateway.getActivities(classRunId, limit);
   }
 

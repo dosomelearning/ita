@@ -33,7 +33,7 @@ Current implementation includes frontend-only flow with mock adapters:
 - Upload photo to presigned S3 URL returned by ingress.
 - Poll/read processing state and result metadata via state API.
 - Render extracted face images and related metadata.
-- Render class-wide latest activity feed entries (`latest 20` default).
+- Render class-wide latest activity feed entries (`latest 200` default).
 
 ## External Interfaces
 

@@ -51,7 +51,7 @@ The sections below define the implementation target for the first MS4 delivery s
   - Purpose: fetch participant upload history for session-scoped user timeline.
 - Frontend session activity feed read:
   - `GET /v1/sessions/{sessionId}/activities`
-  - Purpose: fetch latest session event activities (default latest 20) for activity-feed UI.
+  - Purpose: fetch latest session event activities (default latest 200) for activity-feed UI.
 
 ### Internal API Authentication
 
@@ -223,7 +223,7 @@ Current implementation direction:
 - `GSI3` supports session activity feed query:
   - `gsi3pk = FEED#CLASS#<classRunId>`
   - `gsi3sk = E#<eventTimeMs>#U#<uploadId>#T#<eventType>`
-  - Query mode: descending (`ScanIndexForward=false`) with bounded limit (`<=50`, default `20`).
+  - Query mode: descending (`ScanIndexForward=false`) with bounded limit (`<=200`, default `200`).
   - Intent: no-scan latest-session activities for SPA feed.
 
 Mandatory runtime access constraint:

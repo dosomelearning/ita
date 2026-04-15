@@ -10,7 +10,7 @@
 
 ## Context
 
-The project direction shifts from ranking-first UX to activity-first UX. SPA should show latest session activities (target: last 20), where each upload can contribute multiple pipeline events. Existing `MS4` data model stores event history per upload but does not currently expose efficient session-wide latest-events query without scan.
+The project direction shifts from ranking-first UX to activity-first UX. SPA should show latest session activities (target: last 200), where each upload can contribute multiple pipeline events. Existing `MS4` data model stores event history per upload but does not currently expose efficient session-wide latest-events query without scan.
 
 ## Scope
 
@@ -39,7 +39,7 @@ Out of scope:
 
 - `GET /v1/sessions/{sessionId}/activities`
 - Query params:
-  - `limit` (optional, default `20`, max `50`)
+  - `limit` (optional, default `200`, max `200`)
   - `before` (optional cursor token for pagination, future-ready)
 
 ### Response Shape
@@ -63,12 +63,12 @@ Out of scope:
 }
 ```
 
-### Outcome Mapping (UI Marker Intent)
+### Outcome Mapping
 
-- `statusAfter=completed` -> `outcome=success` (green check)
-- `statusAfter=failed` -> `outcome=failure` (red X)
+- `statusAfter=completed` -> `outcome=success`
+- `statusAfter=failed` -> `outcome=failure`
 - `statusAfter=processing` -> `outcome=in_progress`
-- `statusAfter=queued` (if emitted as event later) -> `outcome=queued`
+- `statusAfter=queued` -> `outcome=queued`
 
 ### Include-All vs Aggregate
 
@@ -90,7 +90,7 @@ Query pattern:
 
 - `Query` on `GSI3` where `gsi3pk = FEED#CLASS#{classRunId}`
 - `ScanIndexForward=false`
-- `Limit=20`
+- `Limit=200`
 
 Notes:
 
@@ -128,3 +128,4 @@ Notes:
 
 - `2026-04-15` - Initial contract/index design draft created.
 - `2026-04-15` - Finalized compact `GSI3` key format and integrated implementation into `MS4` and SPA.
+- `2026-04-15` - Expanded activity-feed default/max limit to `200` and aligned UI to show explicit `eventType`, `producer`, and `statusAfter`.

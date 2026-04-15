@@ -137,7 +137,8 @@ def test_get_status_route():
 
 
 def test_get_participant_uploads_route():
-    api = Ms4Api(StubService())
+    service = StubService()
+    api = Ms4Api(service)
     event = make_http_event("GET", "/v1/sessions/s-1/participants/Alice/uploads")
     response = api.handle(event, None)
     assert response["statusCode"] == 200
@@ -145,14 +146,17 @@ def test_get_participant_uploads_route():
     assert payload["sessionId"] == "s-1"
     assert payload["nickname"] == "Alice"
     assert len(payload["items"]) == 1
+    assert service.calls[-1] == ("participant_uploads", "s-1", "Alice", 20)
 
 
 def test_get_participant_uploads_route_with_limit_query():
-    api = Ms4Api(StubService())
+    service = StubService()
+    api = Ms4Api(service)
     event = make_http_event("GET", "/v1/sessions/s-1/participants/Alice/uploads")
     event["queryStringParameters"] = {"limit": "5"}
     response = api.handle(event, None)
     assert response["statusCode"] == 200
+    assert service.calls[-1] == ("participant_uploads", "s-1", "Alice", 5)
 
 
 def test_get_participant_uploads_route_rejects_invalid_limit():
@@ -166,7 +170,8 @@ def test_get_participant_uploads_route_rejects_invalid_limit():
 
 
 def test_get_session_activities_route():
-    api = Ms4Api(StubService())
+    service = StubService()
+    api = Ms4Api(service)
     event = make_http_event("GET", "/v1/sessions/cr-1/activities")
     response = api.handle(event, None)
     assert response["statusCode"] == 200
@@ -174,6 +179,17 @@ def test_get_session_activities_route():
     assert payload["sessionId"] == "cr-1"
     assert len(payload["items"]) == 1
     assert payload["items"][0]["outcome"] == "failure"
+    assert service.calls[-1] == ("session_activities", "cr-1", 200)
+
+
+def test_get_session_activities_route_caps_limit_to_200():
+    service = StubService()
+    api = Ms4Api(service)
+    event = make_http_event("GET", "/v1/sessions/cr-1/activities")
+    event["queryStringParameters"] = {"limit": "999"}
+    response = api.handle(event, None)
+    assert response["statusCode"] == 200
+    assert service.calls[-1] == ("session_activities", "cr-1", 200)
 
 
 def test_error_envelope_for_domain_error():

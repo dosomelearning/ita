@@ -149,21 +149,58 @@ p {
   cursor: pointer;
 }
 
-.ranking-list {
+.activity-list {
   margin: 0;
-  padding-left: 1.1rem;
+  padding-left: 0;
+  list-style: none;
   display: grid;
-  gap: 0.35rem;
-}
-
-.ranking-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
 }
 
-.ranking-list-full li small {
+.activity-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #d8e4f0;
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  background: #ffffff;
+}
+
+.activity-item-failed {
+  background: #fff1f1;
+  border-color: #f0c7c7;
+}
+
+.activity-main {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.activity-main small {
+  color: #54718c;
+  overflow-wrap: anywhere;
+}
+
+.activity-meta {
+  display: grid;
+  gap: 0.2rem;
+  text-align: right;
+}
+
+.activity-meta span {
+  font-size: 0.75rem;
+  color: #35506e;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.activity-list-full .activity-item {
+  align-items: center;
+}
+
+.activity-list-full .activity-main small {
   color: #54718c;
 }
 

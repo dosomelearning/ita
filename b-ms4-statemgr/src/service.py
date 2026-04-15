@@ -134,7 +134,7 @@ class StateService:
         }
 
     def get_session_activities(self, *, session_id: str, limit: int = 20) -> dict[str, Any]:
-        safe_limit = min(max(limit, 1), 50)
+        safe_limit = min(max(limit, 1), 200)
         items = self._repository.list_session_activities(session_id=session_id, limit=safe_limit)
         activity_items = [
             {

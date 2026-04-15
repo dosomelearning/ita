@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { type ActivityEntry, type JobPhase } from "./mockGateways";
+import { type JobPhase } from "./mockGateways";
 import { createAuthGateway, createUploadGateway } from "./ingressGateway";
 import { createStateGateway, type StateGateway } from "./stateGateway";
 
 type View = "home" | "submit" | "activity";
 type SubmitStatus = "idle" | "validating" | "submitting" | "success" | "failure";
+const ACTIVITY_LIMIT = 200;
 
 const authGateway = createAuthGateway();
 const uploadGateway = createUploadGateway();
@@ -115,7 +116,7 @@ function App() {
     setActivitiesLoading(true);
     setActivitiesError(null);
     try {
-      const nextItems = await stateGateway.getActivities(runId, 20);
+      const nextItems = await stateGateway.getActivities(runId, ACTIVITY_LIMIT);
       setActivities(nextItems);
       setActivitiesUpdatedAt(new Date().toLocaleTimeString());
     } catch {
@@ -298,11 +299,22 @@ function App() {
                 <p className="muted">No activities yet. Submit a photo to begin.</p>
               )}
               {!activitiesLoading && !activitiesError && activities.length > 0 && (
-                <ol className="ranking-list">
+                <ol className="activity-list">
                   {activities.slice(0, 5).map((item) => (
-                    <li key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}>
-                      <span>{item.nickname}</span>
-                      <strong>{activityMarker(item)}</strong>
+                    <li
+                      className={`activity-item ${activityRowClassName(item.statusAfter)}`}
+                      key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}
+                    >
+                      <div className="activity-main">
+                        <strong>{item.nickname}</strong>
+                        <small>
+                          {item.eventType} · {formatEventTime(item.eventTime)}
+                        </small>
+                      </div>
+                      <div className="activity-meta">
+                        <span>{item.producer}</span>
+                        <span>{item.statusAfter}</span>
+                      </div>
                     </li>
                   ))}
                 </ol>
@@ -407,16 +419,22 @@ function App() {
               <p className="muted">No activities available.</p>
             )}
             {!activitiesLoading && !activitiesError && activities.length > 0 && (
-              <ol className="ranking-list ranking-list-full">
+              <ol className="activity-list activity-list-full">
                 {activities.map((item) => (
-                  <li key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}>
-                    <div>
-                      <span>{item.nickname}</span>
+                  <li
+                    className={`activity-item ${activityRowClassName(item.statusAfter)}`}
+                    key={`${item.uploadId}-${item.eventTime}-${item.eventType}`}
+                  >
+                    <div className="activity-main">
+                      <strong>{item.nickname}</strong>
                       <small>
-                        {item.eventType} · {new Date(item.eventTime).toLocaleTimeString()}
+                        {item.eventType} · {formatEventTime(item.eventTime)}
                       </small>
                     </div>
-                    <strong>{activityMarker(item)}</strong>
+                    <div className="activity-meta">
+                      <span>{item.producer}</span>
+                      <span>{item.statusAfter}</span>
+                    </div>
                   </li>
                 ))}
               </ol>
@@ -468,17 +486,19 @@ function App() {
   );
 }
 
-function activityMarker(item: ActivityEntry): string {
-  if (item.outcome === "success") {
-    return "CHECK";
+function formatEventTime(eventTime: string): string {
+  const parsed = new Date(eventTime);
+  if (Number.isNaN(parsed.getTime())) {
+    return eventTime;
   }
-  if (item.outcome === "failure") {
-    return "X";
+  return parsed.toLocaleTimeString();
+}
+
+function activityRowClassName(statusAfter: JobPhase): string {
+  if (statusAfter === "failed") {
+    return "activity-item-failed";
   }
-  if (item.outcome === "queued") {
-    return "QUEUED";
-  }
-  return "RUN";
+  return "";
 }
 
 export default App;

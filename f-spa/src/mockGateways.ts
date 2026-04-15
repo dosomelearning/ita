@@ -26,7 +26,7 @@ export interface ActivityEntry {
   eventType: string;
   statusAfter: JobPhase;
   eventTime: string;
-  producer: "ms2" | "ms3";
+  producer: "ms1" | "ms2" | "ms3";
   outcome: "queued" | "in_progress" | "success" | "failure";
 }
 
@@ -131,23 +131,33 @@ export class MockStateGateway {
     await wait(220);
     const users = ["Ava Novak", "Liam Bauer", "Mia Horvat", "Noah Zoric", "Ema Kralj"];
     const now = Date.now();
-    const items: ActivityEntry[] = Array.from({ length: Math.min(Math.max(limit, 1), 20) }).map((_, idx) => {
-      const phaseIndex = idx % 3;
-      const statusAfter: JobPhase = phaseIndex === 0 ? "failed" : phaseIndex === 1 ? "processing" : "completed";
+    const items: ActivityEntry[] = Array.from({ length: Math.min(Math.max(limit, 1), 200) }).map((_, idx) => {
+      const phaseIndex = idx % 5;
+      const statusAfter: JobPhase =
+        phaseIndex === 0 ? "queued" : phaseIndex === 1 ? "processing" : phaseIndex === 2 ? "completed" : "failed";
+      const eventType =
+        statusAfter === "queued"
+          ? "upload_url_issued"
+          : statusAfter === "failed"
+            ? "detection_failed"
+            : statusAfter === "processing"
+              ? "detection_started"
+              : "extraction_completed";
       return {
         uploadId: `upl-mock-${1000 + idx}`,
         nickname: users[idx % users.length],
-        eventType:
-          statusAfter === "failed"
-            ? "detection_failed"
-            : statusAfter === "processing"
-            ? "detection_completed"
-            : "extraction_completed",
+        eventType,
         statusAfter,
         eventTime: new Date(now - idx * 17_000).toISOString(),
-        producer: statusAfter === "completed" ? "ms3" : "ms2",
+        producer: statusAfter === "queued" ? "ms1" : statusAfter === "completed" ? "ms3" : "ms2",
         outcome:
-          statusAfter === "failed" ? "failure" : statusAfter === "completed" ? "success" : "in_progress",
+          statusAfter === "failed"
+            ? "failure"
+            : statusAfter === "completed"
+              ? "success"
+              : statusAfter === "queued"
+                ? "queued"
+                : "in_progress",
       };
     });
     return items;

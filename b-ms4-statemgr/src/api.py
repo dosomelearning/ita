@@ -55,7 +55,7 @@ class Ms4Api:
                 if match:
                     session_id = unquote(match.group("session_id"))
                     nickname = unquote(match.group("nickname"))
-                    limit = _read_limit(event)
+                    limit = _read_limit(event, default_value=20, max_value=50)
                     result = self._service.get_participant_uploads(
                         session_id=session_id,
                         nickname=nickname,
@@ -65,7 +65,7 @@ class Ms4Api:
                 match = SESSION_ACTIVITIES_PATH_RE.match(path)
                 if match:
                     session_id = unquote(match.group("session_id"))
-                    limit = _read_limit(event)
+                    limit = _read_limit(event, default_value=200, max_value=200)
                     result = self._service.get_session_activities(session_id=session_id, limit=limit)
                     return _ok(200, result)
 
@@ -166,13 +166,13 @@ def _ok(status_code: int, payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _read_limit(event: dict[str, Any]) -> int:
+def _read_limit(event: dict[str, Any], *, default_value: int, max_value: int) -> int:
     query = event.get("queryStringParameters")
     if not isinstance(query, dict):
-        return 20
+        return default_value
     raw_limit = query.get("limit")
     if raw_limit is None:
-        return 20
+        return default_value
     if not isinstance(raw_limit, str) or not raw_limit.strip():
         raise DomainError(
             code="VALIDATION_ERROR",
@@ -199,7 +199,7 @@ def _read_limit(event: dict[str, Any]) -> int:
             retryable=False,
             details={"field": "limit", "value": raw_limit},
         )
-    return parsed
+    return min(parsed, max_value)
 
 
 def _error_response(err: DomainError, *, request_id: str) -> dict[str, Any]:
