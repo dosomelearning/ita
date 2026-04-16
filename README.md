@@ -13,6 +13,7 @@ Serverless demo application for classroom-scale photo ingestion and face extract
 - [`docs/README.md`](docs/README.md) (project documentation map)
 - [`docs/system-checklist.md`](docs/system-checklist.md) (system-wide task tracker)
 - [`docs/testing/README.md`](docs/testing/README.md) (centralized testing and diagnostics strategy)
+- [`docs/process/photo-upload-processing-sequence.md`](docs/process/photo-upload-processing-sequence.md) (end-to-end photo upload and processing sequence)
 - [`b-infra/README.md`](b-infra/README.md)
 - [`b-ms1-ingress/README.md`](b-ms1-ingress/README.md)
 - [`b-ms2-detection/README.md`](b-ms2-detection/README.md)
