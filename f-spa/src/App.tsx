@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ChangeEvent } from "react";
 import { type ActivityEntry, type JobPhase } from "./mockGateways";
 import { createAuthGateway, createUploadGateway } from "./ingressGateway";
 import { createStateGateway, type StateGateway } from "./stateGateway";
@@ -12,6 +12,11 @@ import {
 type View = "home" | "submit" | "activity";
 type SubmitStatus = "idle" | "validating" | "submitting" | "success" | "failure";
 const ACTIVITY_LIMIT = 200;
+const MAX_FACE_COUNT = 99;
+const FACE_TILE_SIZE_PX = 40;
+const FACE_TILE_GAP_PX = 10;
+const MOBILE_FACE_GRID_RESERVED_WIDTH_PX = 200;
+const MOBILE_BREAKPOINT_PX = 768;
 
 const authGateway = createAuthGateway();
 const uploadGateway = createUploadGateway();
@@ -55,6 +60,12 @@ function App() {
   const [activitiesUpdatedAt, setActivitiesUpdatedAt] = useState<string | null>(null);
   const [forceFailureNextSubmit, setForceFailureNextSubmit] = useState(false);
   const [lastFaceCount, setLastFaceCount] = useState<number | null>(null);
+  const [isFaceGridModalOpen, setIsFaceGridModalOpen] = useState(false);
+  const [modalFaceCount, setModalFaceCount] = useState<number>(0);
+  const [modalFaceTitle, setModalFaceTitle] = useState<string>("Extracted Faces");
+  const [viewportWidth, setViewportWidth] = useState<number>(() =>
+    typeof window === "undefined" ? 1024 : window.innerWidth
+  );
 
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const libraryInputRef = useRef<HTMLInputElement | null>(null);
@@ -81,11 +92,40 @@ function App() {
     void refreshActivities(classRunId);
   }, [classRunId]);
 
+  useEffect(() => {
+    function onResize() {
+      setViewportWidth(window.innerWidth);
+    }
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isFaceGridModalOpen) {
+      return;
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsFaceGridModalOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isFaceGridModalOpen]);
+
   const nicknameError = validateNickname(nickname);
   const classCodeError = validateClassCode(password);
   const hasValidCredentials = nicknameError === null && classCodeError === null;
   const canSubmit = selectedFile !== null && hasValidCredentials;
   const canSimulateFailure = supportsFailureSimulation(stateGateway);
+  const clampedFaceCount = clampFaceCount(lastFaceCount);
+  const clampedModalFaceCount = clampFaceCount(modalFaceCount);
+  const faceGridColumns = computeFaceGridColumns(clampedModalFaceCount, viewportWidth);
+  const faceSlots = createFaceSlots(clampedModalFaceCount);
   const gatewayDebug = stateGateway.getDebugInfo?.() ?? { mode: "unknown" };
   const ingressDebug = authGateway.getDebugInfo?.() ?? { mode: "unknown" };
   const uploadDebug = uploadGateway.getDebugInfo?.() ?? { mode: "unknown" };
@@ -96,6 +136,19 @@ function App() {
     setUploadProgress(0);
     setJobPhases(createInitialJobPhases());
     setLastFaceCount(null);
+    setIsFaceGridModalOpen(false);
+    setModalFaceCount(0);
+    setModalFaceTitle("Extracted Faces");
+  }
+
+  function openFaceGridModal(faceCount: number | null | undefined, title: string) {
+    const nextFaceCount = clampFaceCount(typeof faceCount === "number" ? faceCount : 0);
+    if (nextFaceCount < 1) {
+      return;
+    }
+    setModalFaceCount(nextFaceCount);
+    setModalFaceTitle(title);
+    setIsFaceGridModalOpen(true);
   }
 
   function onSelectFile(file: File | null) {
@@ -324,7 +377,15 @@ function App() {
                       <div className="activity-meta">
                         <span>{item.producer}</span>
                         <span>{item.statusAfter}</span>
-                        {typeof item.faceCount === "number" && <span className="activity-face-count">{item.faceCount}</span>}
+                        {typeof item.faceCount === "number" && (
+                          <button
+                            className="activity-face-count-btn"
+                            type="button"
+                            onClick={() => openFaceGridModal(item.faceCount, `${item.nickname} · ${item.eventType}`)}
+                          >
+                            <span className="activity-face-count">{item.faceCount}</span>
+                          </button>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -406,8 +467,16 @@ function App() {
               </ul>
               {submitStatus === "success" && lastFaceCount !== null && (
                 <div className="faces-count-panel">
-                  <p className="faces-count-label">Faces Detected</p>
-                  <p className="faces-count-number">{lastFaceCount}</p>
+                  <p className="faces-count-label">Extraction Success</p>
+                  <button
+                    className="face-count-link"
+                    type="button"
+                    onClick={() => openFaceGridModal(lastFaceCount, "Latest Submit Result")}
+                    disabled={clampedFaceCount < 1}
+                  >
+                    <span className="faces-count-number">{lastFaceCount}</span>
+                    <span className="face-count-link-text">extracted faces</span>
+                  </button>
                 </div>
               )}
             </section>
@@ -448,7 +517,15 @@ function App() {
                     <div className="activity-meta">
                       <span>{item.producer}</span>
                       <span>{item.statusAfter}</span>
-                      {typeof item.faceCount === "number" && <span className="activity-face-count">{item.faceCount}</span>}
+                      {typeof item.faceCount === "number" && (
+                        <button
+                          className="activity-face-count-btn"
+                          type="button"
+                          onClick={() => openFaceGridModal(item.faceCount, `${item.nickname} · ${item.eventType}`)}
+                        >
+                          <span className="activity-face-count">{item.faceCount}</span>
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -457,6 +534,33 @@ function App() {
           </>
         )}
       </section>
+
+      {isFaceGridModalOpen && (
+        <div className="modal-overlay" role="presentation" onClick={() => setIsFaceGridModalOpen(false)}>
+          <section
+            className="modal-card faces-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Extracted faces matrix"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="panel-header">
+              <h3>{modalFaceTitle}</h3>
+              <button className="link-btn" type="button" onClick={() => setIsFaceGridModalOpen(false)}>
+                Close
+              </button>
+            </div>
+            <p className="muted">
+              Empty matrix shell: {clampedModalFaceCount} slot{clampedModalFaceCount === 1 ? "" : "s"}.
+            </p>
+            <div className="faces-grid" style={{ "--faces-grid-columns": String(faceGridColumns) } as CSSProperties}>
+              {faceSlots.map((slotIndex) => (
+                <div className="face-slot" key={slotIndex} aria-hidden="true" />
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
 
       <nav className="bottom-nav" aria-label="Main navigation">
         <button
@@ -499,6 +603,34 @@ function App() {
       />
     </main>
   );
+}
+
+function clampFaceCount(faceCount: number | null): number {
+  if (typeof faceCount !== "number" || Number.isNaN(faceCount)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(MAX_FACE_COUNT, Math.floor(faceCount)));
+}
+
+function createFaceSlots(faceCount: number): number[] {
+  return Array.from({ length: faceCount }, (_, index) => index + 1);
+}
+
+function computeFaceGridColumns(faceCount: number, viewportWidth: number): number {
+  if (faceCount <= 0) {
+    return 1;
+  }
+  const preferredColumns = Math.min(10, Math.max(1, Math.ceil(Math.sqrt(faceCount))));
+  if (viewportWidth > MOBILE_BREAKPOINT_PX) {
+    return Math.min(faceCount, preferredColumns);
+  }
+
+  const mobileAvailableWidth = Math.max(40, viewportWidth - MOBILE_FACE_GRID_RESERVED_WIDTH_PX);
+  const mobileMaxColumns = Math.max(
+    1,
+    Math.floor((mobileAvailableWidth + FACE_TILE_GAP_PX) / (FACE_TILE_SIZE_PX + FACE_TILE_GAP_PX))
+  );
+  return Math.max(1, Math.min(faceCount, preferredColumns, mobileMaxColumns));
 }
 
 function formatEventTime(eventTime: string): string {

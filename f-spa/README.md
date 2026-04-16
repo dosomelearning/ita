@@ -93,4 +93,5 @@ Current scope note:
 
 - Activity feed is class-run scoped and uses `MS1`-returned `classRunId` in `ms4` mode.
 - Submit status view reads completed `MS4` result payload and shows green face-count summary when `results.faceCount` is present.
-- Home/Activity feed rows show completed extraction face count (when present in event details) with green success shading.
+- Submit and Home/Activity feed face-count indicators are clickable and open a responsive extracted-faces modal shell.
+- Current modal renders empty `40x40` face slots only (up to `99`) with dynamic columns; backend image population is deferred.

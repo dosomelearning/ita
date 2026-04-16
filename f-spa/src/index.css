@@ -209,6 +209,13 @@ p {
   letter-spacing: normal;
 }
 
+.activity-face-count-btn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
 .activity-list-full .activity-item {
   align-items: center;
 }
@@ -296,6 +303,31 @@ p {
   text-align: center;
 }
 
+.face-count-link {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  margin: 0.1rem 0 0;
+  display: inline-grid;
+  gap: 0.2rem;
+  justify-items: center;
+  cursor: pointer;
+}
+
+.face-count-link:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.face-count-link-text {
+  color: #1d6e39;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .faces-count-label {
   margin: 0;
   color: #2b6d42;
@@ -306,11 +338,57 @@ p {
 }
 
 .faces-count-number {
-  margin: 0.1rem 0 0;
+  margin: 0;
   color: #155f31;
   font-size: 2rem;
   line-height: 1;
   font-weight: 900;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 28, 48, 0.58);
+  display: grid;
+  place-items: center;
+  z-index: 20;
+  padding: 1rem;
+}
+
+.modal-card {
+  width: min(92vw, 680px);
+  max-height: min(86vh, 820px);
+  overflow: auto;
+  border: 1px solid #c9daeb;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 22px 55px -30px rgba(10, 49, 88, 0.72);
+  padding: 0.9rem;
+}
+
+.faces-modal {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.faces-grid {
+  --faces-grid-columns: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--faces-grid-columns), 40px);
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.face-slot {
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+  border: 1px dashed #9fb9d2;
+  background:
+    linear-gradient(135deg, rgba(184, 211, 235, 0.45), rgba(168, 194, 219, 0.28)),
+    repeating-linear-gradient(45deg, rgba(114, 147, 177, 0.16) 0 4px, rgba(114, 147, 177, 0.06) 4px 8px);
 }
 
 .muted {
@@ -373,5 +451,10 @@ p {
 @media (max-width: 420px) {
   .credentials-row {
     grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    width: min(96vw, 680px);
+    padding: 0.8rem;
   }
 }

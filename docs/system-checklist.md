@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-034`
+Last Issued ID: `T-035`
 
 ## Rules
 
@@ -41,3 +41,4 @@ Last Issued ID: `T-034`
 | [T-032](tasks/T-032-add-readme-app-screenshots-section.md) | in_progress | Documentation | Add root `README.md` section that embeds SPA screenshots and documents key UI states/flow observations. | `README.md`, `img/app_screenshots/01-session-entry.png`, `img/app_screenshots/02-capture-and-submit.png`, `img/app_screenshots/03-activity.png`, `tasks/T-032-add-readme-app-screenshots-section.md` | In progress; documenting session entry, capture/submit status view, and activity feed behavior |
 | [T-033](tasks/T-033-harden-spa-ms1-input-validation.md) | in_progress | Security/Validation | Harden shared code + nickname validation in both `f-spa` and `b-ms1-ingress` with consistent rules and explicit unit-test coverage. | `f-spa/src/App.tsx`, `f-spa/src/inputValidation.ts`, `f-spa/src/inputValidation.test.ts`, `f-spa/src/mockGateways.ts`, `f-spa/src/mockGateways.test.ts`, `b-ms1-ingress/src/domain.py`, `b-ms1-ingress/tests/unit/test_domain.py`, `b-ms1-ingress/tests/unit/test_service.py`, `b-ms1-ingress/tests/unit/test_api.py`, `tasks/T-033-harden-spa-ms1-input-validation.md` | In progress; validation + smoke checks passed, awaiting explicit closure instruction |
 | [T-034](tasks/T-034-apply-apigw-rate-limits-to-public-routes-only.md) | in_progress | API/Security | Apply API Gateway throttling to public `/v1/*` routes only, while keeping internal `/internal/*` service routes without gateway throttling. | `b-ms1-ingress/template.yaml`, `b-ms4-statemgr/template.yaml`, `tasks/T-034-apply-apigw-rate-limits-to-public-routes-only.md` | In progress; public-route throttling deployed and smoke checks passed, awaiting explicit closure instruction |
+| [T-035](tasks/T-035-add-spa-face-grid-modal-shell.md) | in_progress | Frontend | Make successful extraction face-count indicator clickable and open a responsive modal with an empty face-slot matrix (40x40 cells, max 99). | `f-spa/src/App.tsx`, `f-spa/src/index.css`, `f-spa/README.md`, `tasks/T-035-add-spa-face-grid-modal-shell.md` | In progress; submit + activity face-count modal shell done, image population deferred |
