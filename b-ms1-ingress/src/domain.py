@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+CLASS_CODE_PATTERN = re.compile(r"^\S+$")
+NICKNAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9]{0,19}$")
 
 
 class IngressError(Exception):
@@ -39,6 +42,8 @@ def validate_upload_init_payload(payload: dict[str, Any]) -> UploadInitRequest:
     password = _required_string(payload, "password")
     nickname = _required_string(payload, "nickname")
     session_id = _required_string(payload, "sessionId")
+    _validate_class_code(password)
+    _validate_nickname(nickname)
     content_type = _required_string(payload, "contentType").lower()
     if content_type not in ALLOWED_CONTENT_TYPES:
         raise IngressError(
@@ -88,3 +93,23 @@ def _required_string(payload: dict[str, Any], field: str) -> str:
             details={"field": field},
         )
     return value.strip()
+
+
+def _validate_class_code(class_code: str) -> None:
+    if not CLASS_CODE_PATTERN.fullmatch(class_code):
+        raise IngressError(
+            code="VALIDATION_ERROR",
+            message="password must not contain spaces.",
+            status_code=400,
+            details={"field": "password"},
+        )
+
+
+def _validate_nickname(nickname: str) -> None:
+    if not NICKNAME_PATTERN.fullmatch(nickname):
+        raise IngressError(
+            code="VALIDATION_ERROR",
+            message="nickname must start with a letter and contain only letters/numbers (max 20, no spaces).",
+            status_code=400,
+            details={"field": "nickname"},
+        )

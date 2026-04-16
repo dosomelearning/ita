@@ -66,6 +66,9 @@ The sections below define the implementation target for the first MS4 delivery s
 - Use one API Gateway for `MS4` with path-based separation:
   - `/internal/*` for service-to-service write paths (`AWS_IAM`).
   - `/v1/*` for frontend read paths (public, rate-limited).
+- Throttling policy:
+  - Public `/v1/*` routes have explicit API Gateway route throttling limits.
+  - Internal `/internal/*` routes do not have API Gateway throttling settings applied.
 - Initial route set:
   - `POST /internal/uploads/init`
   - `POST /internal/uploads/{uploadId}/events`
@@ -280,6 +283,12 @@ Each write/read path should log:
 Current overrides include:
 
 - `CloudFrontDomain`
+- `PublicStatusThrottleRateLimit`
+- `PublicStatusThrottleBurstLimit`
+- `PublicParticipantUploadsThrottleRateLimit`
+- `PublicParticipantUploadsThrottleBurstLimit`
+- `PublicActivitiesThrottleRateLimit`
+- `PublicActivitiesThrottleBurstLimit`
 
 ## Open Decisions
 

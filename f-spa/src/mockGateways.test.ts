@@ -4,13 +4,13 @@ import { MockAuthGateway, MockStateGateway } from "./mockGateways";
 describe("MockAuthGateway", () => {
   it("rejects short or invalid code", async () => {
     const gateway = new MockAuthGateway();
-    const result = await gateway.initUploadSession("bad");
+    const result = await gateway.initUploadSession("bad code");
     expect(result.accepted).toBe(false);
   });
 
   it("accepts valid class code", async () => {
     const gateway = new MockAuthGateway();
-    const result = await gateway.initUploadSession("class-2026");
+    const result = await gateway.initUploadSession("class2026!@");
     expect(result.accepted).toBe(true);
     expect(result.jobId.startsWith("job-")).toBe(true);
   });

@@ -38,7 +38,7 @@ run_check \
 run_check \
   "ms1-invalid" \
   "MS1 invalid password returns HTTP 401/403" \
-  bash -c "code=\$(curl -sS -o '${MS1_INVALID_BODY}' -w '%{http_code}' -H 'Content-Type: application/json' -X POST --data '{\"password\":\"${MS1_INVALID_PASSWORD}\",\"nickname\":\"smoke-user\",\"sessionId\":\"smoke-session-live-basic\",\"contentType\":\"image/jpeg\"}' '${MS1_API_BASE_URL%/}/v1/uploads/init'); [ \"\${code}\" = '401' ] || [ \"\${code}\" = '403' ]"
+  bash -c "code=\$(curl -sS -o '${MS1_INVALID_BODY}' -w '%{http_code}' -H 'Content-Type: application/json' -X POST --data '{\"password\":\"${MS1_INVALID_PASSWORD}\",\"nickname\":\"smokeuser\",\"sessionId\":\"smoke-session-live-basic\",\"contentType\":\"image/jpeg\"}' '${MS1_API_BASE_URL%/}/v1/uploads/init'); [ \"\${code}\" = '401' ] || [ \"\${code}\" = '403' ]"
 
 run_check \
   "ms1-envelope" \

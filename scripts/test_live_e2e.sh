@@ -23,7 +23,7 @@ if [ -z "${SMOKE_CLASS_PASSWORD}" ]; then
   exit 2
 fi
 
-SMOKE_NICKNAME="${SMOKE_NICKNAME:-smoke-user}"
+SMOKE_NICKNAME="${SMOKE_NICKNAME:-smokeuser}"
 SMOKE_SESSION_ID="${SMOKE_SESSION_ID:-smoke-session-$(date -u +%Y%m%d-%H%M%S)}"
 SMOKE_FILE_PATH="${SMOKE_FILE_PATH:-img/ita-arch-diag1.png}"
 SMOKE_CONTENT_TYPE="${SMOKE_CONTENT_TYPE:-image/png}"

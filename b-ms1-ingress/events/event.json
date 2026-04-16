@@ -12,6 +12,6 @@
   "headers": {
     "content-type": "application/json"
   },
-  "body": "{\"password\":\"class2026\",\"nickname\":\"ava\",\"sessionId\":\"class-2026-04-14\",\"contentType\":\"image/jpeg\"}",
+  "body": "{\"password\":\"AB12CD\",\"nickname\":\"ava\",\"sessionId\":\"class-2026-04-14\",\"contentType\":\"image/jpeg\"}",
   "isBase64Encoded": false
 }

@@ -2,6 +2,12 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { type ActivityEntry, type JobPhase } from "./mockGateways";
 import { createAuthGateway, createUploadGateway } from "./ingressGateway";
 import { createStateGateway, type StateGateway } from "./stateGateway";
+import {
+  sanitizeClassCodeInput,
+  sanitizeNicknameInput,
+  validateClassCode,
+  validateNickname,
+} from "./inputValidation";
 
 type View = "home" | "submit" | "activity";
 type SubmitStatus = "idle" | "validating" | "submitting" | "success" | "failure";
@@ -75,8 +81,10 @@ function App() {
     void refreshActivities(classRunId);
   }, [classRunId]);
 
-  const hasCredentials = password.trim().length > 0 && nickname.trim().length > 0;
-  const canSubmit = selectedFile !== null && hasCredentials;
+  const nicknameError = validateNickname(nickname);
+  const classCodeError = validateClassCode(password);
+  const hasValidCredentials = nicknameError === null && classCodeError === null;
+  const canSubmit = selectedFile !== null && hasValidCredentials;
   const canSimulateFailure = supportsFailureSimulation(stateGateway);
   const gatewayDebug = stateGateway.getDebugInfo?.() ?? { mode: "unknown" };
   const ingressDebug = authGateway.getDebugInfo?.() ?? { mode: "unknown" };
@@ -142,15 +150,15 @@ function App() {
       return;
     }
 
-    if (!password.trim()) {
+    if (classCodeError) {
       setSubmitStatus("failure");
-      setSubmitMessage("Enter class code before submitting.");
+      setSubmitMessage(classCodeError);
       return;
     }
 
-    if (!nickname.trim()) {
+    if (nicknameError) {
       setSubmitStatus("failure");
-      setSubmitMessage("Enter nickname before submitting.");
+      setSubmitMessage(nicknameError);
       return;
     }
 
@@ -165,8 +173,8 @@ function App() {
       }
 
       const initResult = await authGateway.initUploadSession({
-        password: password.trim(),
-        nickname: nickname.trim(),
+        password,
+        nickname,
         sessionId: sessionIdRef.current,
         contentType: selectedFile.type || "image/jpeg",
         originalFilename: selectedFile.name,
@@ -200,7 +208,7 @@ function App() {
 
       if (finalResult.status === "completed") {
         setSubmitStatus("success");
-        setSubmitMessage(`Photo processed successfully for ${nickname.trim()}.`);
+        setSubmitMessage(`Photo processed successfully for ${nickname}.`);
         setLastFaceCount(typeof finalResult.faceCount === "number" ? finalResult.faceCount : null);
       } else {
         setSubmitStatus("failure");
@@ -242,9 +250,10 @@ function App() {
                   inputMode="text"
                   autoComplete="nickname"
                   value={nickname}
-                  onChange={(event) => setNickname(event.target.value)}
+                  onChange={(event) => setNickname(sanitizeNicknameInput(event.target.value))}
                   placeholder="Your display name"
                 />
+                {nickname.length > 0 && nicknameError && <p className="status-error">{nicknameError}</p>}
               </div>
               <div className="field-group">
                 <label className="label" htmlFor="class-code">
@@ -257,17 +266,17 @@ function App() {
                   inputMode="text"
                   autoComplete="off"
                   value={password}
-                  maxLength={6}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="6-char code"
+                  onChange={(event) => setPassword(sanitizeClassCodeInput(event.target.value))}
+                  placeholder="Class code"
                 />
+                {password.length > 0 && classCodeError && <p className="status-error">{classCodeError}</p>}
               </div>
             </div>
             <div className="actions-grid">
               <button
                 className="btn btn-primary"
                 type="button"
-                disabled={!hasCredentials}
+                disabled={!hasValidCredentials}
                 onClick={() => cameraInputRef.current?.click()}
               >
                 Capture Photo
@@ -275,7 +284,7 @@ function App() {
               <button
                 className="btn btn-secondary"
                 type="button"
-                disabled={!hasCredentials}
+                disabled={!hasValidCredentials}
                 onClick={() => libraryInputRef.current?.click()}
               >
                 Choose Photo
@@ -345,7 +354,7 @@ function App() {
               <button
                 className="btn btn-secondary"
                 type="button"
-                disabled={!hasCredentials}
+                disabled={!hasValidCredentials}
                 onClick={() => cameraInputRef.current?.click()}
               >
                 Retake
@@ -353,7 +362,7 @@ function App() {
               <button
                 className="btn btn-secondary"
                 type="button"
-                disabled={!hasCredentials}
+                disabled={!hasValidCredentials}
                 onClick={() => libraryInputRef.current?.click()}
               >
                 Change Photo

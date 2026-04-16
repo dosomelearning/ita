@@ -7,7 +7,7 @@ from src.service import IngressService
 
 
 class FakeSsmClient:
-    def __init__(self, value: str = "class2026"):
+    def __init__(self, value: str = "AB12CD"):
         self.value = value
 
     def get_parameter(self, Name: str, WithDecryption: bool):
@@ -40,7 +40,7 @@ class FakeMs4Client:
         return self.status, self.payload
 
 
-def make_service(*, password: str = "class2026", ms4_status: int = 200, ms4_payload: dict | None = None):
+def make_service(*, password: str = "AB12CD", ms4_status: int = 200, ms4_payload: dict | None = None):
     return IngressService(
         shared_password_parameter_name="/ita/shared-password",
         processing_bucket_name="ita-data-bucket",
@@ -55,7 +55,7 @@ def test_handle_upload_init_success():
     service = make_service()
     result = service.handle_upload_init(
         {
-            "password": "class2026",
+            "password": "AB12CD",
             "nickname": "ava",
             "sessionId": "s-1",
             "contentType": "image/jpeg",
@@ -75,14 +75,14 @@ def test_handle_upload_init_emits_ms1_sequence_events():
         shared_password_parameter_name="/ita/shared-password",
         processing_bucket_name="ita-data-bucket",
         presign_expires_seconds=900,
-        ssm_client=FakeSsmClient(value="class2026"),
+        ssm_client=FakeSsmClient(value="AB12CD"),
         s3_client=FakeS3Client(),
         ms4_client=ms4_client,
     )
 
     service.handle_upload_init(
         {
-            "password": "class2026",
+            "password": "AB12CD",
             "nickname": "ava",
             "sessionId": "s-1",
             "contentType": "image/jpeg",
@@ -104,7 +104,7 @@ def test_handle_upload_init_rejects_invalid_password():
     with pytest.raises(IngressError) as exc:
         service.handle_upload_init(
             {
-                "password": "wrong",
+                "password": "ZZ99ZZ",
                 "nickname": "ava",
                 "sessionId": "s-1",
                 "contentType": "image/jpeg",
@@ -122,7 +122,7 @@ def test_handle_upload_init_fails_when_ms4_init_fails():
     with pytest.raises(IngressError) as exc:
         service.handle_upload_init(
             {
-                "password": "class2026",
+                "password": "AB12CD",
                 "nickname": "ava",
                 "sessionId": "s-1",
                 "contentType": "image/jpeg",

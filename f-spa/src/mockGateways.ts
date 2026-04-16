@@ -42,8 +42,8 @@ export class MockAuthGateway {
   async initUploadSession(password: string): Promise<InitUploadResult> {
     await wait(250);
 
-    const normalized = password.trim().toLowerCase();
-    if (normalized.length < 4 || normalized === "wrong") {
+    const normalized = password.trim();
+    if (!normalized || /\s/.test(normalized) || normalized.toLowerCase() === "wrong") {
       return {
         accepted: false,
         uploadTarget: "",
@@ -57,7 +57,7 @@ export class MockAuthGateway {
       accepted: true,
       uploadTarget: "mock://s3/presigned-url",
       jobId: `job-${suffix}`,
-      classRunId: `cr-mock-${normalized}`,
+      classRunId: `cr-mock-${suffix}`,
     };
   }
 }

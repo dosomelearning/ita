@@ -49,6 +49,9 @@ Current implementation includes frontend-only flow with mock adapters:
 - Primary flows must work well on mobile browsers.
 - Clear feedback for async states: `queued`, `processing`, `completed`, `failed`.
 - Fail fast and explain user-actionable recovery on invalid password or upload errors.
+- Session-entry input constraints:
+  - `Nickname`: must start with a letter, letters/numbers only, max 20 chars, no spaces.
+  - `Code`: required and must not contain spaces (special characters are allowed).
 
 ## Commands
 

@@ -8,6 +8,30 @@ Parameters:
     Type: String
     Default: "ita.dosomelearning.com"
     Description: "CloudFront domain used for frontend-facing artifact URLs."
+  PublicStatusThrottleRateLimit:
+    Type: Number
+    Default: 80
+    Description: Requests per second limit for GET /v1/uploads/{uploadId}/status.
+  PublicStatusThrottleBurstLimit:
+    Type: Number
+    Default: 160
+    Description: Burst request limit for GET /v1/uploads/{uploadId}/status.
+  PublicParticipantUploadsThrottleRateLimit:
+    Type: Number
+    Default: 20
+    Description: Requests per second limit for GET /v1/sessions/{sessionId}/participants/{nickname}/uploads.
+  PublicParticipantUploadsThrottleBurstLimit:
+    Type: Number
+    Default: 40
+    Description: Burst request limit for GET /v1/sessions/{sessionId}/participants/{nickname}/uploads.
+  PublicActivitiesThrottleRateLimit:
+    Type: Number
+    Default: 20
+    Description: Requests per second limit for GET /v1/sessions/{sessionId}/activities.
+  PublicActivitiesThrottleBurstLimit:
+    Type: Number
+    Default: 40
+    Description: Burst request limit for GET /v1/sessions/{sessionId}/activities.
 
 Globals:
   Function:
@@ -26,6 +50,16 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: "$default"
+      RouteSettings:
+        "GET /v1/uploads/{uploadId}/status":
+          ThrottlingRateLimit: !Ref PublicStatusThrottleRateLimit
+          ThrottlingBurstLimit: !Ref PublicStatusThrottleBurstLimit
+        "GET /v1/sessions/{sessionId}/participants/{nickname}/uploads":
+          ThrottlingRateLimit: !Ref PublicParticipantUploadsThrottleRateLimit
+          ThrottlingBurstLimit: !Ref PublicParticipantUploadsThrottleBurstLimit
+        "GET /v1/sessions/{sessionId}/activities":
+          ThrottlingRateLimit: !Ref PublicActivitiesThrottleRateLimit
+          ThrottlingBurstLimit: !Ref PublicActivitiesThrottleBurstLimit
       Auth:
         EnableIamAuthorizer: true
       CorsConfiguration:

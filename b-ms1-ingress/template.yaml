@@ -19,6 +19,14 @@ Parameters:
     MinValue: 60
     MaxValue: 3600
     Description: Expiration time (seconds) for presigned PUT URL.
+  PublicInitThrottleRateLimit:
+    Type: Number
+    Default: 30
+    Description: Requests per second limit for public POST /v1/uploads/init.
+  PublicInitThrottleBurstLimit:
+    Type: Number
+    Default: 60
+    Description: Burst request limit for public POST /v1/uploads/init.
 
 Globals:
   Function:
@@ -37,6 +45,10 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: "$default"
+      RouteSettings:
+        "POST /v1/uploads/init":
+          ThrottlingRateLimit: !Ref PublicInitThrottleRateLimit
+          ThrottlingBurstLimit: !Ref PublicInitThrottleBurstLimit
       CorsConfiguration:
         AllowOrigins:
           - http://localhost:5173

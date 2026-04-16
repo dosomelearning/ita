@@ -39,7 +39,7 @@ def test_upload_init_route_success():
         "/v1/uploads/init",
         body=json.dumps(
             {
-                "password": "class2026",
+                "password": "AB12CD",
                 "nickname": "ava",
                 "sessionId": "s-1",
                 "contentType": "image/jpeg",

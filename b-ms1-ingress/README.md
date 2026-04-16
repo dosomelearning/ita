@@ -59,6 +59,8 @@ Optional fields:
 Validation baseline:
 
 - `password`, `nickname`, `sessionId`, `contentType` must be non-empty strings.
+- `password` must not contain whitespace (letters/numbers/special characters are allowed).
+- `nickname` must start with a letter, contain only letters/numbers, and be max 20 characters (no spaces).
 - Reject unsupported content types with explicit validation error.
 
 Class-run grouping note:
@@ -192,6 +194,7 @@ Log fields per request:
 ## Non-Functional Requirements
 
 - API Gateway rate limiting is mandatory.
+- Public route `POST /v1/uploads/init` is throttled at API Gateway stage route settings.
 - Validation failure paths must be explicit and auditable.
 - Keep credentials out of repo; use AWS profile-based auth for local tooling.
 
@@ -219,6 +222,8 @@ Current overrides include:
 - `SharedPasswordSsmParameterName`
 - `Ms4InternalApiBaseUrl`
 - `PresignExpiresSeconds`
+- `PublicInitThrottleRateLimit`
+- `PublicInitThrottleBurstLimit`
 
 ## Open Decisions
 

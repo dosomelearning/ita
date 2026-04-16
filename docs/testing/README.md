@@ -48,6 +48,7 @@ Main variables:
 - `MS1_API_BASE_URL`
 - `MS4_API_BASE_URL`
 - `SMOKE_CLASS_PASSWORD` (optional; required for `live-e2e`)
+- `SMOKE_NICKNAME` (default `smokeuser`; must satisfy backend nickname validation)
 - `SMOKE_EXPECTED_FINAL_STATUS` (currently `queued`)
 
 All scripts write JSON run reports to:

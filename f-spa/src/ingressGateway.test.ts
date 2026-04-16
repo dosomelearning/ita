@@ -64,7 +64,7 @@ describe("ms1 auth gateway behavior", () => {
       VITE_MS1_API_BASE_URL: "https://ms1.example",
     });
     const result = await gateway.initUploadSession({
-      password: "class2026",
+      password: "AB12CD",
       nickname: "ava",
       sessionId: "s-1",
       contentType: "image/jpeg",
