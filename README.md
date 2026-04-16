@@ -32,6 +32,35 @@ Students use a mobile-first SPA to capture/upload images, backend services proce
 Source image: `img/ita-arch-diag1.png`.
 For decision rationale, resource ownership semantics, and tradeoffs not fully shown visually, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
+## App Screenshots
+
+The screenshots below document the current SPA user flow from session setup to submit/status and activity history.
+Each image includes red-arrow annotation overlays used to point out key UI controls and runtime states.
+
+### 1) Session Entry
+
+![Session Entry screen](img/app_screenshots/01-session-entry.png)
+
+- Shows `Session Entry` with `Nickname` and `Code` fields populated.
+- Primary entry actions are visible: `Capture Photo` and `Choose Photo`.
+- Includes embedded `Activity Feed` rows with pipeline state labels like `MS1 QUEUED`, `MS2 PROCESSING`, and `MS2 FAILED`.
+
+### 2) Capture and Submit
+
+![Capture and Submit screen](img/app_screenshots/02-capture-and-submit.png)
+
+- Shows a selected photo preview (`3d_keychain.jpg`) before submit.
+- Exposes the capture/edit controls: `Retake`, `Change Photo`, and primary `Submit`.
+- Status panel demonstrates a failure path: `No faces detected in uploaded image.` with stage badges (`Queued`, `Processing`, `Completed`, `Failed`) and endpoint context (`Gateway`, `Ingress`, `Upload`).
+
+### 3) Activity Feed
+
+![Activity Feed screen](img/app_screenshots/03-activity.png)
+
+- Shows a longer mixed-status event timeline in the `Activity Feed`.
+- Demonstrates queued/processing/failure transitions and successful `MS3 COMPLETED` rows carrying face-count values (for example `99` and `5`).
+- Confirms recent-first operational visibility for classroom/demo runs.
+
 ## Working Map (Read This First)
 
 Use this order to understand and continue the project:

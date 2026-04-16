@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-031`
+Last Issued ID: `T-032`
 
 ## Rules
 
@@ -38,3 +38,4 @@ Last Issued ID: `T-031`
 | [T-027](tasks/T-027-centralize-testing-and-diagnostics-strategy.md) | in_progress | Quality | Centralize project-wide testing and diagnostics strategy with visible docs and root runner scripts for local, live-basic, and smoke checks. | `README.md`, `docs/README.md`, `docs/testing/README.md`, `scripts/README.md`, `scripts/test_local.sh`, `scripts/test_live_basic.sh`, `scripts/test_live_e2e.sh`, `scripts/smoke_check.sh`, `scripts/test_all.sh`, `tasks/T-027-centralize-testing-and-diagnostics-strategy.md` | In progress; establish single source of truth and centralized runnable checks |
 | [T-030](tasks/T-030-design-activity-feed-contract-and-ms4-session-events-index.md) | in_progress | Contracts | Replace ranking direction with activity feed contract and define `MS4` query model (`latest 200` events) using no-scan DynamoDB index strategy. | `tasks/T-030-design-activity-feed-contract-and-ms4-session-events-index.md`, `tasks/T-010-define-frontend-backend-exchange-contracts.md`, `b-ms4-statemgr/README.md`, `b-ms4-statemgr/template.yaml`, `b-ms4-statemgr/src/api.py`, `b-ms4-statemgr/src/service.py`, `b-ms4-statemgr/src/repository.py`, `f-spa/src/stateGateway.ts`, `f-spa/src/App.tsx` | In progress; compact `GSI3` (`FEED#CLASS`, `E/U/T`) and activity-feed implementation now renders `eventType`, `producer`, and `statusAfter` directly |
 | [T-031](tasks/T-031-implement-ms3-extraction-phase1-and-spa-face-count-summary.md) | in_progress | Backend/Frontend | Implement `MS3` phase-1 extraction worker (`faces-extraction.v1`) and expose completed face-count summary in SPA status panel without rendering face images yet. | `b-ms3-faces/src/*.py`, `b-ms3-faces/template.yaml`, `b-ms3-faces/tests/unit/*.py`, `f-spa/src/stateGateway.ts`, `f-spa/src/App.tsx`, `f-spa/src/index.css`, `docs/process/photo-upload-processing-sequence.md`, `b-ms3-faces/README.md`, `tasks/T-031-implement-ms3-extraction-phase1-and-spa-face-count-summary.md` | In progress; target is deterministic extraction outputs + MS4 completed event carrying `results.faceCount` |
+| [T-032](tasks/T-032-add-readme-app-screenshots-section.md) | in_progress | Documentation | Add root `README.md` section that embeds SPA screenshots and documents key UI states/flow observations. | `README.md`, `img/app_screenshots/01-session-entry.png`, `img/app_screenshots/02-capture-and-submit.png`, `img/app_screenshots/03-activity.png`, `tasks/T-032-add-readme-app-screenshots-section.md` | In progress; documenting session entry, capture/submit status view, and activity feed behavior |
