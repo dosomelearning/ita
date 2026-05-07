@@ -199,12 +199,5 @@ Directory names above are canonical and intentionally locked.
 
 ## Current Status
 
-Project is in bootstrap/setup phase.
-Code, tests, and execution scripts are being created incrementally, with documentation-first guidance to keep work stateless and easy to continue.
-
-## Next Milestones
-
-- Finalize per-module `README.md` files with canonical `install`/`test`/`lint`/`run` commands.
-- Scaffold SAM backend services and shared infra.
-- Scaffold frontend SPA and upload workflow.
-- Define initial end-to-end flow contract between frontend and ingress microservice.
+The project has working shared infrastructure, service modules, frontend implementation, and deployment-support scripts.
+Current work is focused on environment rollout, deployment variants, and operational/documentation refinement rather than initial scaffolding.

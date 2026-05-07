@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-STACK_NAME="${STACK_NAME:-ita-infra}"
-AWS_PROFILE="${AWS_PROFILE:-dev}"
-AWS_REGION="${AWS_REGION:-eu-central-1}"
-
 PREFIXES=(
   "uploaded/"
   "processed/"
@@ -29,13 +25,42 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || abort "Missing required command: $1"
 }
 
+usage() {
+  cat <<'EOF'
+Usage:
+  ./b-infra/scripts/init_data_prefixes.sh <environment-config.json>
+
+The config file must contain:
+  - stackName
+  - awsProfile
+  - awsRegion
+EOF
+}
+
+[[ $# -eq 1 ]] || {
+  usage >&2
+  abort "Exactly one environment config JSON file is required."
+}
+
 require_cmd aws
 require_cmd jq
+
+CONFIG_FILE="$1"
+[[ -f "${CONFIG_FILE}" ]] || abort "Required file not found: ${CONFIG_FILE}"
+
+STACK_NAME="$(jq -r '.stackName // empty' "${CONFIG_FILE}")"
+AWS_PROFILE="$(jq -r '.awsProfile // empty' "${CONFIG_FILE}")"
+AWS_REGION="$(jq -r '.awsRegion // empty' "${CONFIG_FILE}")"
+
+[[ -n "${STACK_NAME}" ]] || abort "Missing required config value: stackName"
+[[ -n "${AWS_PROFILE}" ]] || abort "Missing required config value: awsProfile"
+[[ -n "${AWS_REGION}" ]] || abort "Missing required config value: awsRegion"
 
 log "Starting prefix initialization."
 log "Stack: ${STACK_NAME}"
 log "AWS profile: ${AWS_PROFILE}"
 log "AWS region: ${AWS_REGION}"
+log "Config file: ${CONFIG_FILE}"
 
 STACK_JSON="$(aws cloudformation describe-stacks \
   --profile "${AWS_PROFILE}" \
@@ -44,7 +69,18 @@ STACK_JSON="$(aws cloudformation describe-stacks \
   --output json \
   --no-cli-pager)"
 
-DATA_BUCKET="$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="SharedProcessingBucketName") | .OutputValue' <<< "${STACK_JSON}")"
+STACK_STATUS="$(jq -r '.Stacks[0].StackStatus // empty' <<< "${STACK_JSON}")"
+[[ -n "${STACK_STATUS}" ]] || abort "StackStatus not found in CloudFormation response."
+
+case "${STACK_STATUS}" in
+  CREATE_COMPLETE|UPDATE_COMPLETE|UPDATE_ROLLBACK_COMPLETE|IMPORT_COMPLETE|IMPORT_ROLLBACK_COMPLETE)
+    ;;
+  *)
+    abort "Stack is not ready for output-dependent actions yet. Current status: ${STACK_STATUS}"
+    ;;
+esac
+
+DATA_BUCKET="$(jq -r '(.Stacks[0].Outputs // [])[] | select(.OutputKey=="SharedProcessingBucketName") | .OutputValue' <<< "${STACK_JSON}")"
 [[ -n "${DATA_BUCKET}" && "${DATA_BUCKET}" != "null" ]] || abort "SharedProcessingBucketName output not found."
 
 log "Target data bucket: ${DATA_BUCKET}"

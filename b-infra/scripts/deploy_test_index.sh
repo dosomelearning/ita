@@ -4,10 +4,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-STACK_NAME="${STACK_NAME:-ita-infra}"
-AWS_PROFILE="${AWS_PROFILE:-dev}"
-AWS_REGION="${AWS_REGION:-eu-central-1}"
-
 export AWS_CLI_AUTO_PROMPT=off
 export AWS_PAGER=""
 export AWS_EC2_METADATA_DISABLED=true
@@ -25,9 +21,37 @@ require_cmd() {
   command -v "$1" >/dev/null 2>&1 || abort "Missing required command: $1"
 }
 
+usage() {
+  cat <<'EOF'
+Usage:
+  ./b-infra/scripts/deploy_test_index.sh <environment-config.json>
+
+The config file must contain:
+  - stackName
+  - awsProfile
+  - awsRegion
+EOF
+}
+
+[[ $# -eq 1 ]] || {
+  usage >&2
+  abort "Exactly one environment config JSON file is required."
+}
+
 require_cmd aws
 require_cmd jq
 require_cmd curl
+
+CONFIG_FILE="$1"
+[[ -f "${CONFIG_FILE}" ]] || abort "Required file not found: ${CONFIG_FILE}"
+
+STACK_NAME="$(jq -r '.stackName // empty' "${CONFIG_FILE}")"
+AWS_PROFILE="$(jq -r '.awsProfile // empty' "${CONFIG_FILE}")"
+AWS_REGION="$(jq -r '.awsRegion // empty' "${CONFIG_FILE}")"
+
+[[ -n "${STACK_NAME}" ]] || abort "Missing required config value: stackName"
+[[ -n "${AWS_PROFILE}" ]] || abort "Missing required config value: awsProfile"
+[[ -n "${AWS_REGION}" ]] || abort "Missing required config value: awsRegion"
 
 WORK_FILE="$(mktemp /tmp/ita-index-XXXXXX.html)"
 BODY_FILE="$(mktemp /tmp/ita-index-body-XXXXXX.txt)"
@@ -40,6 +64,7 @@ log "Starting test index deployment flow."
 log "Stack: ${STACK_NAME}"
 log "AWS profile: ${AWS_PROFILE}"
 log "AWS region: ${AWS_REGION}"
+log "Config file: ${CONFIG_FILE}"
 
 STACK_JSON="$(aws cloudformation describe-stacks \
   --profile "${AWS_PROFILE}" \
@@ -48,9 +73,20 @@ STACK_JSON="$(aws cloudformation describe-stacks \
   --output json \
   --no-cli-pager)"
 
-WEB_BUCKET="$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="WebHostingBucketName") | .OutputValue' <<< "${STACK_JSON}")"
-APP_URL_DNS="$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="AppUrlDns") | .OutputValue' <<< "${STACK_JSON}")"
-APP_URL_CF="$(jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="AppUrlCloudFront") | .OutputValue' <<< "${STACK_JSON}")"
+STACK_STATUS="$(jq -r '.Stacks[0].StackStatus // empty' <<< "${STACK_JSON}")"
+[[ -n "${STACK_STATUS}" ]] || abort "StackStatus not found in CloudFormation response."
+
+case "${STACK_STATUS}" in
+  CREATE_COMPLETE|UPDATE_COMPLETE|UPDATE_ROLLBACK_COMPLETE|IMPORT_COMPLETE|IMPORT_ROLLBACK_COMPLETE)
+    ;;
+  *)
+    abort "Stack is not ready for output-dependent actions yet. Current status: ${STACK_STATUS}"
+    ;;
+esac
+
+WEB_BUCKET="$(jq -r '(.Stacks[0].Outputs // [])[] | select(.OutputKey=="WebHostingBucketName") | .OutputValue' <<< "${STACK_JSON}")"
+APP_URL_DNS="$(jq -r '(.Stacks[0].Outputs // [])[] | select(.OutputKey=="AppUrlDns") | .OutputValue' <<< "${STACK_JSON}")"
+APP_URL_CF="$(jq -r '(.Stacks[0].Outputs // [])[] | select(.OutputKey=="AppUrlCloudFront") | .OutputValue' <<< "${STACK_JSON}")"
 
 [[ -n "${WEB_BUCKET}" && "${WEB_BUCKET}" != "null" ]] || abort "WebHostingBucketName output not found."
 

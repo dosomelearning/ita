@@ -27,6 +27,11 @@ Parameters:
     Default: "arn:aws:acm:us-east-1:111122223333:certificate/00000000-0000-0000-0000-000000000000"
     Description: "ACM certificate ARN in us-east-1 for CloudFront (environment-specific)"
 
+  SpaAllowedOrigin:
+    Type: String
+    Default: "https://ita.example.com"
+    Description: "Primary HTTPS origin allowed to use presigned-upload bucket CORS"
+
   CostAllocationTagValue:
     Type: String
     Default: "ita"
@@ -60,7 +65,7 @@ Resources:
           - AllowedOrigins:
               - "http://localhost:5173"
               - "http://127.0.0.1:5173"
-              - "https://ita.dosomelearning.com"
+              - !Ref SpaAllowedOrigin
             AllowedMethods:
               - PUT
               - GET

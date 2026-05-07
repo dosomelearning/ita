@@ -1,17 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Deploy/update b-infra CloudFormation stack using a local JSON parameter file.
-# This script does not create parameter files; provide one before running.
+# Deploy/update b-infra CloudFormation stack using a mandatory environment descriptor.
+# The descriptor contains stack/profile/region settings plus the CloudFormation parameters array.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-
-STACK_NAME="${STACK_NAME:-ita-infra}"
-AWS_PROFILE="${AWS_PROFILE:-dev}"
-AWS_REGION="${AWS_REGION:-eu-central-1}"
-TEMPLATE_FILE="${TEMPLATE_FILE:-${MODULE_DIR}/template-infra.yaml}"
-PARAMS_FILE="${1:-${MODULE_DIR}/params/dev.parameters.json}"
 
 export AWS_CLI_AUTO_PROMPT=off
 export AWS_PAGER=""
@@ -31,15 +25,70 @@ require_file() {
   [[ -f "${path}" ]] || abort "Required file not found: ${path}"
 }
 
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || abort "Missing required command: $1"
+}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ./b-infra/scripts/deploy_infra.sh <environment-config.json>
+
+The config file must contain:
+  - stackName
+  - awsProfile
+  - awsRegion
+  - parameters (CloudFormation parameter array)
+
+Optional:
+  - templateFile
+EOF
+}
+
+[[ $# -eq 1 ]] || {
+  usage >&2
+  abort "Exactly one environment config JSON file is required."
+}
+
+require_cmd aws
+require_cmd jq
+
+CONFIG_FILE="$1"
+require_file "${CONFIG_FILE}"
+
+STACK_NAME="$(jq -r '.stackName // empty' "${CONFIG_FILE}")"
+AWS_PROFILE="$(jq -r '.awsProfile // empty' "${CONFIG_FILE}")"
+AWS_REGION="$(jq -r '.awsRegion // empty' "${CONFIG_FILE}")"
+TEMPLATE_VALUE="$(jq -r '.templateFile // empty' "${CONFIG_FILE}")"
+
+[[ -n "${STACK_NAME}" ]] || abort "Missing required config value: stackName"
+[[ -n "${AWS_PROFILE}" ]] || abort "Missing required config value: awsProfile"
+[[ -n "${AWS_REGION}" ]] || abort "Missing required config value: awsRegion"
+
+if [[ -n "${TEMPLATE_VALUE}" ]]; then
+  TEMPLATE_FILE="${TEMPLATE_VALUE}"
+else
+  TEMPLATE_FILE="${MODULE_DIR}/template-infra.yaml"
+fi
+
 require_file "${TEMPLATE_FILE}"
-require_file "${PARAMS_FILE}"
+
+PARAMS_FILE="$(mktemp /tmp/ita-infra-params-XXXXXX.json)"
+cleanup() {
+  rm -f "${PARAMS_FILE}"
+}
+trap cleanup EXIT
+
+jq -e '.parameters | arrays' "${CONFIG_FILE}" > "${PARAMS_FILE}" || \
+  abort "Config field 'parameters' must be a JSON array."
 
 log "Starting deployment flow."
 log "Stack name: ${STACK_NAME}"
 log "AWS profile: ${AWS_PROFILE}"
 log "AWS region: ${AWS_REGION}"
 log "Template file: ${TEMPLATE_FILE}"
-log "Parameters file: ${PARAMS_FILE}"
+log "Config file: ${CONFIG_FILE}"
+log "Extracted parameters file: ${PARAMS_FILE}"
 
 STACK_EXISTS=0
 STACK_STATUS=""

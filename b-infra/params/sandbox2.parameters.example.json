@@ -1,14 +1,14 @@
 {
-  "stackName": "ita-infra",
-  "awsProfile": "dev",
+  "stackName": "ita-infra-sandbox2",
+  "awsProfile": "sandbox2",
   "awsRegion": "eu-central-1",
   "parameters": [
     {"ParameterKey":"HostedZoneId","ParameterValue":"ZXXXXXXXXXXXXXXX"},
-    {"ParameterKey":"DomainName","ParameterValue":"ita.example.com"},
+    {"ParameterKey":"DomainName","ParameterValue":"ita.sandbox2.dosomelearning.com"},
     {"ParameterKey":"ProjectPrefix","ParameterValue":"ita"},
-    {"ParameterKey":"RandomSuffix","ParameterValue":"pxuzz47kqx"},
+    {"ParameterKey":"RandomSuffix","ParameterValue":"sandbox2a"},
     {"ParameterKey":"AcmCertificateArn","ParameterValue":"arn:aws:acm:us-east-1:111122223333:certificate/00000000-0000-0000-0000-000000000000"},
-    {"ParameterKey":"SpaAllowedOrigin","ParameterValue":"https://ita.example.com"},
+    {"ParameterKey":"SpaAllowedOrigin","ParameterValue":"https://ita.sandbox2.dosomelearning.com"},
     {"ParameterKey":"CostAllocationTagValue","ParameterValue":"ita"}
   ]
 }

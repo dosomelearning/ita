@@ -2,7 +2,7 @@
 
 Use this file as the live project backlog for cross-service, architecture, security, and delivery work.
 
-Last Issued ID: `T-035`
+Last Issued ID: `T-036`
 
 ## Rules
 
@@ -42,3 +42,4 @@ Last Issued ID: `T-035`
 | [T-033](tasks/T-033-harden-spa-ms1-input-validation.md) | in_progress | Security/Validation | Harden shared code + nickname validation in both `f-spa` and `b-ms1-ingress` with consistent rules and explicit unit-test coverage. | `f-spa/src/App.tsx`, `f-spa/src/inputValidation.ts`, `f-spa/src/inputValidation.test.ts`, `f-spa/src/mockGateways.ts`, `f-spa/src/mockGateways.test.ts`, `b-ms1-ingress/src/domain.py`, `b-ms1-ingress/tests/unit/test_domain.py`, `b-ms1-ingress/tests/unit/test_service.py`, `b-ms1-ingress/tests/unit/test_api.py`, `tasks/T-033-harden-spa-ms1-input-validation.md` | In progress; validation + smoke checks passed, awaiting explicit closure instruction |
 | [T-034](tasks/T-034-apply-apigw-rate-limits-to-public-routes-only.md) | in_progress | API/Security | Apply API Gateway throttling to public `/v1/*` routes only, while keeping internal `/internal/*` service routes without gateway throttling. | `b-ms1-ingress/template.yaml`, `b-ms4-statemgr/template.yaml`, `tasks/T-034-apply-apigw-rate-limits-to-public-routes-only.md` | In progress; public-route throttling deployed and smoke checks passed, awaiting explicit closure instruction |
 | [T-035](tasks/T-035-add-spa-face-grid-modal-shell.md) | in_progress | Frontend | Make successful extraction face-count indicator clickable and open a responsive modal with an empty face-slot matrix (40x40 cells, max 99). | `f-spa/src/App.tsx`, `f-spa/src/index.css`, `f-spa/README.md`, `tasks/T-035-add-spa-face-grid-modal-shell.md` | In progress; submit + activity face-count modal shell done, image population deferred |
+| [T-036](tasks/T-036-plan-second-account-infra-deployment.md) | in_progress | Infrastructure | Plan shared-infra deployment into a completely separate AWS account while preserving the existing deployment and handling DNS/TLS for a new app URL under `sandbox2.dosomelearning.com`. | `b-infra/README.md`, `b-infra/template-infra.yaml`, `b-infra/scripts/deploy_infra.sh`, `tasks/T-036-plan-second-account-infra-deployment.md` | In progress; current focus is same-template viability when Route53 hosted zone is not present in the original account |
