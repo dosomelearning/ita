@@ -1,0 +1,18 @@
+{
+  "inputs": {
+    "environmentName": "sandbox2",
+    "awsProfile": "sandbox2",
+    "awsRegion": "eu-central-1",
+    "infraStackName": "ita-infra-sandbox2",
+    "ms1StackName": "ita-ms1-ingress-sandbox2",
+    "ms4StackName": "ita-ms4-statemgr-sandbox2",
+    "ingressGatewayMode": "ms1",
+    "stateGatewayMode": "ms4"
+  },
+  "resolved": {
+    "webBucketName": "ita-web-iorwnr4ed0",
+    "cloudFrontDistributionId": "E3RSWAR5T5AD01",
+    "ms1ApiBaseUrl": "https://zas6fxvvza.execute-api.eu-central-1.amazonaws.com",
+    "ms4ApiBaseUrl": "https://wkhs4b0ur8.execute-api.eu-central-1.amazonaws.com"
+  }
+}

@@ -60,8 +60,8 @@ Current implementation includes frontend-only flow with mock adapters:
 - Lint: `npm run lint`
 - Run: `npm run dev`
 - Build: `npm run build`
-- Deploy to S3 web bucket: `./scripts/deploy_spa.sh`
-- Optional deploy overrides: `WEB_BUCKET`, `DISTRIBUTION_ID`, `INFRA_STACK_NAME`, `AWS_PROFILE`, `AWS_REGION`
+- Populate deploy config from deployed stack outputs: `./scripts/populate_deploy_config.sh ./config/default.json`
+- Deploy to S3 web bucket using mandatory environment config: `./scripts/deploy_spa.sh ./config/default.json`
 
 ## Open Decisions
 
@@ -69,6 +69,37 @@ Current implementation includes frontend-only flow with mock adapters:
 - Media capture constraints (file size/type/compression).
 - Polling cadence and frontend caching strategy.
 - Runtime configuration contract for consuming per-environment backend API endpoints.
+
+## Deployment Config Workflow
+
+Tracked deploy-target config files live under `f-spa/config/`:
+
+- `config/default.json`
+- `config/sandbox2.json`
+
+Each file is the source of truth for one SPA deployment target and contains:
+
+- `inputs`:
+  - AWS CLI profile and region
+  - stack names for `b-infra`, `b-ms1-ingress`, and `b-ms4-statemgr`
+  - gateway mode settings for build-time Vite config
+- `resolved`:
+  - web bucket name
+  - CloudFront distribution ID
+  - `MS1` API base URL
+  - `MS4` API base URL
+
+Workflow:
+
+1. Populate or refresh one target config from current CloudFormation stack outputs:
+   - `./scripts/populate_deploy_config.sh ./config/default.json`
+   - `./scripts/populate_deploy_config.sh ./config/sandbox2.json`
+2. Deploy the SPA using that config file:
+   - `./scripts/deploy_spa.sh ./config/default.json`
+   - `./scripts/deploy_spa.sh ./config/sandbox2.json`
+
+`deploy_spa.sh` requires the config file path as its first argument and does not fall back to implicit environment defaults.
+It reads manual settings from `inputs`, reads resolved deployment values from `resolved`, sets the required `VITE_*` build variables, builds the SPA, uploads `dist/` to the configured S3 web bucket, and invalidates the configured CloudFront distribution.
 
 ## Runtime Config (Status Gateway)
 
