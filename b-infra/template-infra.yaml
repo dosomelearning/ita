@@ -299,6 +299,18 @@ Outputs:
     Export:
       Name: !Sub "${AWS::StackName}-AppUrlDns"
 
+  AppDomainName:
+    Description: "Public app domain name used by frontend and service CORS/url contracts"
+    Value: !Ref DomainName
+    Export:
+      Name: !Sub "${AWS::StackName}-AppDomainName"
+
+  SpaAllowedOrigin:
+    Description: "Primary HTTPS SPA origin allowed by shared infrastructure resources"
+    Value: !Ref SpaAllowedOrigin
+    Export:
+      Name: !Sub "${AWS::StackName}-SpaAllowedOrigin"
+
   CloudFrontDistributionId:
     Description: "CloudFront distribution ID"
     Value: !Ref CloudFrontDistribution

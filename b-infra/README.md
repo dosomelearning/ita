@@ -61,16 +61,16 @@ Service-owned compute and API resources are not defined here.
   - Shared processing bucket name.
   - Boundary queue ARNs/URLs and DLQ ARNs.
   - System alarms SNS topic ARN.
-  - Frontend delivery outputs (CloudFront/DNS URL, distribution ID, hosting bucket).
+  - Frontend delivery outputs (CloudFront/DNS URL, app domain name, SPA allowed origin, distribution ID, hosting bucket).
 - Keep environment/bootstrap identifiers as local deployment parameters (not imported from other stacks):
   - Hosted zone ID.
   - Domain name.
   - ACM certificate ARN.
   - SPA upload CORS origin.
 - Rationale:
-  - Runtime shared-resource identifiers should be centrally produced and consistently consumed.
-  - Environment/account-specific bootstrap values remain deployment-context inputs and should stay outside cross-stack dependency contracts.
-  - This avoids leaking environment bootstrap details into import contracts and keeps service templates focused on runtime dependencies.
+- Runtime shared-resource identifiers should be centrally produced and consistently consumed.
+- Environment/account-specific bootstrap values remain deployment-context inputs and should stay outside cross-stack dependency contracts.
+- This avoids leaking environment bootstrap details into import contracts and keeps service templates focused on runtime dependencies.
 
 ## Current Template Decisions
 
