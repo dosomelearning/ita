@@ -4,15 +4,21 @@ Description: >-
   ita-ms1-ingress upload-init service.
 
 Parameters:
-  ProcessingBucketName:
+  # ProcessingBucketName:
+  #   Type: String
+  #   Description: Shared processing bucket name for upload targets.
+  SharedInfraStackName:
     Type: String
-    Description: Shared processing bucket name for upload targets.
+    Description: Stack name of the shared infra deployment that exports shared runtime values.
   SharedPasswordSsmParameterName:
     Type: String
     Description: SSM parameter name containing shared class password.
-  Ms4InternalApiBaseUrl:
+  # Ms4InternalApiBaseUrl:
+  #   Type: String
+  #   Description: Base URL for MS4 internal API.
+  StateMgrStackName:
     Type: String
-    Description: Base URL for MS4 internal API.
+    Description: Stack name of the MS4 state manager deployment that exports its API endpoint.
   PresignExpiresSeconds:
     Type: Number
     Default: 900
@@ -53,7 +59,9 @@ Resources:
         AllowOrigins:
           - http://localhost:5173
           - http://127.0.0.1:5173
-          - https://ita.dosomelearning.com
+          # - https://ita.dosomelearning.com
+          - !ImportValue
+              Fn::Sub: "${SharedInfraStackName}-SpaAllowedOrigin"
         AllowMethods:
           - POST
           - OPTIONS
@@ -69,8 +77,12 @@ Resources:
       Environment:
         Variables:
           SHARED_PASSWORD_SSM_PARAM: !Ref SharedPasswordSsmParameterName
-          PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
-          MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+          # PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
+          PROCESSING_BUCKET_NAME: !ImportValue
+            Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
+          # MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+          MS4_INTERNAL_API_BASE_URL: !ImportValue
+            Fn::Sub: "${StateMgrStackName}-ApiEndpoint"
           PRESIGN_EXPIRES_SECONDS: !Ref PresignExpiresSeconds
       Policies:
         - Statement:
@@ -82,7 +94,11 @@ Resources:
             - Effect: Allow
               Action:
                 - s3:PutObject
-              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/uploaded/*"
+              # Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/uploaded/*"
+              Resource: !Sub
+                - "arn:aws:s3:::${ImportedProcessingBucketName}/uploaded/*"
+                - ImportedProcessingBucketName: !ImportValue
+                    Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
         - Statement:
             - Effect: Allow
               Action:
@@ -102,6 +118,8 @@ Outputs:
   ApiEndpoint:
     Description: API endpoint for ms1-ingress.
     Value: !Sub "https://${IngressApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiEndpoint"
 
   FunctionArn:
     Description: Lambda ARN for ms1-ingress.

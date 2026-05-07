@@ -17,7 +17,29 @@ confirm_changeset = true
 resolve_s3 = true
 region = "eu-central-1"
 profile = "dev"
-parameter_overrides = "ProcessingBucketName=ita-data-pxuzz47kqx SharedPasswordSsmParameterName=/ita/class/shared-password Ms4InternalApiBaseUrl=https://90zby48wa9.execute-api.eu-central-1.amazonaws.com PresignExpiresSeconds=900"
+# parameter_overrides = "ProcessingBucketName=ita-data-pxuzz47kqx SharedPasswordSsmParameterName=/ita/class/shared-password Ms4InternalApiBaseUrl=https://90zby48wa9.execute-api.eu-central-1.amazonaws.com PresignExpiresSeconds=900"
+parameter_overrides = "SharedInfraStackName=ita-infra StateMgrStackName=ita-ms4-statemgr SharedPasswordSsmParameterName=/ita/class/shared-password PresignExpiresSeconds=900"
 
 [default.package.parameters]
+resolve_s3 = true
+
+[sandbox2.global.parameters]
+stack_name = "ita-ms1-ingress-sandbox2"
+
+[sandbox2.build.parameters]
+cached = true
+parallel = true
+
+[sandbox2.validate.parameters]
+lint = true
+
+[sandbox2.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+region = "eu-central-1"
+profile = "sandbox2"
+parameter_overrides = "SharedInfraStackName=ita-infra-sandbox2 StateMgrStackName=ita-ms4-statemgr-sandbox2 SharedPasswordSsmParameterName=/ita/class/shared-password PresignExpiresSeconds=900"
+
+[sandbox2.package.parameters]
 resolve_s3 = true
