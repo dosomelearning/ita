@@ -4,18 +4,24 @@ Description: >-
   ita-ms3-faces extraction worker service.
 
 Parameters:
-  ProcessingBucketName:
+  # ProcessingBucketName:
+  #   Type: String
+  #   Default: "ita-data-pxuzz47kqx"
+  #   Description: Shared processing bucket containing uploaded images and extraction artifacts.
+  # FacesExtractionQueueArn:
+  #   Type: String
+  #   Default: "arn:aws:sqs:eu-central-1:186388857715:ita-faces-extraction-pxuzz47kqx"
+  #   Description: ARN of faces extraction SQS queue consumed by MS3.
+  # Ms4InternalApiBaseUrl:
+  #   Type: String
+  #   Default: "https://90zby48wa9.execute-api.eu-central-1.amazonaws.com"
+  #   Description: Base URL for MS4 internal API.
+  SharedInfraStackName:
     Type: String
-    Default: "ita-data-pxuzz47kqx"
-    Description: Shared processing bucket containing uploaded images and extraction artifacts.
-  FacesExtractionQueueArn:
+    Description: Stack name of the shared infra deployment that exports shared runtime values.
+  StateMgrStackName:
     Type: String
-    Default: "arn:aws:sqs:eu-central-1:186388857715:ita-faces-extraction-pxuzz47kqx"
-    Description: ARN of faces extraction SQS queue consumed by MS3.
-  Ms4InternalApiBaseUrl:
-    Type: String
-    Default: "https://90zby48wa9.execute-api.eu-central-1.amazonaws.com"
-    Description: Base URL for MS4 internal API.
+    Description: Stack name of the MS4 state manager deployment that exports its API endpoint.
 
 Globals:
   Function:
@@ -38,8 +44,12 @@ Resources:
       Handler: main.handler
       Environment:
         Variables:
-          PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
-          MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+          # PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
+          PROCESSING_BUCKET_NAME: !ImportValue
+            Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
+          # MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+          MS4_INTERNAL_API_BASE_URL: !ImportValue
+            Fn::Sub: "${StateMgrStackName}-ApiEndpoint"
       Policies:
         - Statement:
             - Effect: Allow
@@ -47,17 +57,31 @@ Resources:
                 - sqs:ReceiveMessage
                 - sqs:DeleteMessage
                 - sqs:GetQueueAttributes
-              Resource: !Ref FacesExtractionQueueArn
+              # Resource: !Ref FacesExtractionQueueArn
+              Resource: !ImportValue
+                Fn::Sub: "${SharedInfraStackName}-FacesExtractionQueueArn"
             - Effect: Allow
               Action:
                 - s3:GetObject
               Resource:
-                - !Sub "arn:aws:s3:::${ProcessingBucketName}/processed/faces/*"
-                - !Sub "arn:aws:s3:::${ProcessingBucketName}/rekognition/*"
+                # - !Sub "arn:aws:s3:::${ProcessingBucketName}/processed/faces/*"
+                # - !Sub "arn:aws:s3:::${ProcessingBucketName}/rekognition/*"
+                - !Sub
+                    - "arn:aws:s3:::${ImportedProcessingBucketName}/processed/faces/*"
+                    - ImportedProcessingBucketName: !ImportValue
+                        Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
+                - !Sub
+                    - "arn:aws:s3:::${ImportedProcessingBucketName}/rekognition/*"
+                    - ImportedProcessingBucketName: !ImportValue
+                        Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
             - Effect: Allow
               Action:
                 - s3:PutObject
-              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/faces/*"
+              # Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/faces/*"
+              Resource: !Sub
+                - "arn:aws:s3:::${ImportedProcessingBucketName}/faces/*"
+                - ImportedProcessingBucketName: !ImportValue
+                    Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
             - Effect: Allow
               Action:
                 - execute-api:Invoke
@@ -66,7 +90,9 @@ Resources:
         FacesExtractionQueue:
           Type: SQS
           Properties:
-            Queue: !Ref FacesExtractionQueueArn
+            # Queue: !Ref FacesExtractionQueueArn
+            Queue: !ImportValue
+              Fn::Sub: "${SharedInfraStackName}-FacesExtractionQueueArn"
             BatchSize: 1
             MaximumBatchingWindowInSeconds: 0
 

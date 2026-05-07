@@ -17,7 +17,29 @@ confirm_changeset = true
 resolve_s3 = true
 region = "eu-central-1"
 profile = "dev"
-parameter_overrides = "ProcessingBucketName=ita-data-pxuzz47kqx FacesExtractionQueueArn=arn:aws:sqs:eu-central-1:186388857715:ita-faces-extraction-pxuzz47kqx Ms4InternalApiBaseUrl=https://90zby48wa9.execute-api.eu-central-1.amazonaws.com"
+# parameter_overrides = "ProcessingBucketName=ita-data-pxuzz47kqx FacesExtractionQueueArn=arn:aws:sqs:eu-central-1:186388857715:ita-faces-extraction-pxuzz47kqx Ms4InternalApiBaseUrl=https://90zby48wa9.execute-api.eu-central-1.amazonaws.com"
+parameter_overrides = "SharedInfraStackName=ita-infra StateMgrStackName=ita-ms4-statemgr"
 
 [default.package.parameters]
+resolve_s3 = true
+
+[sandbox2.global.parameters]
+stack_name = "ita-ms3-faces-sandbox2"
+
+[sandbox2.build.parameters]
+cached = true
+parallel = true
+
+[sandbox2.validate.parameters]
+lint = true
+
+[sandbox2.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+region = "eu-central-1"
+profile = "sandbox2"
+parameter_overrides = "SharedInfraStackName=ita-infra-sandbox2 StateMgrStackName=ita-ms4-statemgr-sandbox2"
+
+[sandbox2.package.parameters]
 resolve_s3 = true

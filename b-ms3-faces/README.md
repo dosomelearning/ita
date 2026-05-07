@@ -94,6 +94,42 @@ Consumer rules:
 - Test: `./scripts/run_tests.sh`
 - Lint: `conda run -n conda_py_env_312 python -m ruff check src tests`
 - Run: `sam build --template-file template.yaml`
+- Deploy (`default` / original environment): `sam deploy --config-env default`
+- Deploy (`sandbox2` / additional environment): `sam deploy --config-env sandbox2`
+
+Deployment invocation note:
+
+- `sam deploy --config-env <env>` selects the matching section from `samconfig.toml`.
+- The AWS CLI profile is read from that section's `profile` field.
+- Current mapping:
+  - `default` -> profile `dev`
+  - `sandbox2` -> profile `sandbox2`
+
+## Deployment Parameters
+
+`MS3` template parameters are configured in `b-ms3-faces/samconfig.toml` under:
+
+- `[default.deploy.parameters].parameter_overrides`
+- `[sandbox2.deploy.parameters].parameter_overrides`
+
+Current overrides include:
+
+- `SharedInfraStackName`
+- `StateMgrStackName`
+
+Shared values now expected via CloudFormation imports:
+
+- From `b-infra`:
+  - `${SharedInfraStackName}-SharedProcessingBucketName`
+  - `${SharedInfraStackName}-FacesExtractionQueueArn`
+- From `b-ms4-statemgr`:
+  - `${StateMgrStackName}-ApiEndpoint`
+
+Import/export model:
+
+- `MS3` no longer receives the shared processing bucket name, faces-extraction queue ARN, or `MS4` API base URL as manually duplicated values in `samconfig.toml`.
+- `MS3` imports shared infra values from `b-infra` and the internal API base URL from the owning `MS4` stack.
+- This removes environment-specific hardcoding of bucket names, queue identifiers, and state-manager API URL from service deployment overrides.
 
 ## Open Decisions
 
