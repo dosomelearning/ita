@@ -6,6 +6,17 @@ Serverless demo application for classroom-scale photo ingestion and face extract
 
 - Canonical GitHub repository: [https://github.com/dosomelearning/ita](https://github.com/dosomelearning/ita)
 
+## Deployed App
+
+- Sandbox2 app: [https://ita.sandbox2.dosomelearning.com/](https://ita.sandbox2.dosomelearning.com/)
+- Availability note: deployed links are subject to planned demonstrations and may not always be active.
+
+## Guided Demonstration
+
+- Guided demonstrations on microservices architectures on AWS will be performed using the DLABS platform.
+- Access is subject to individual invitations and requires a mandatory access code.
+- DLABS platform: [https://dlabs.dosomelearning.com/](https://dlabs.dosomelearning.com/)
+
 ## Related Docs
 
 - [`AGENTS.md`](AGENTS.md) (project working rules)
