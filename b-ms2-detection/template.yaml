@@ -4,26 +4,32 @@ Description: >-
   ita-ms2-detection detection worker service.
 
 Parameters:
-  ProcessingBucketName:
+  # ProcessingBucketName:
+  #   Type: String
+  #   Default: "ita-data-pxuzz47kqx"
+  #   Description: Shared processing bucket containing uploaded images and detection artifacts.
+  # UploadedPhotosQueueArn:
+  #   Type: String
+  #   Default: "arn:aws:sqs:eu-central-1:186388857715:ita-uploaded-photos-pxuzz47kqx"
+  #   Description: ARN of uploaded photos SQS queue consumed by MS2.
+  # FacesExtractionQueueArn:
+  #   Type: String
+  #   Default: "arn:aws:sqs:eu-central-1:186388857715:ita-faces-extraction-pxuzz47kqx"
+  #   Description: ARN of faces extraction SQS queue used by MS2 producer path.
+  # FacesExtractionQueueUrl:
+  #   Type: String
+  #   Default: "https://sqs.eu-central-1.amazonaws.com/186388857715/ita-faces-extraction-pxuzz47kqx"
+  #   Description: URL of faces extraction SQS queue used by MS2 producer path.
+  # Ms4InternalApiBaseUrl:
+  #   Type: String
+  #   Default: "https://90zby48wa9.execute-api.eu-central-1.amazonaws.com"
+  #   Description: Base URL for MS4 internal API.
+  SharedInfraStackName:
     Type: String
-    Default: "ita-data-pxuzz47kqx"
-    Description: Shared processing bucket containing uploaded images and detection artifacts.
-  UploadedPhotosQueueArn:
+    Description: Stack name of the shared infra deployment that exports shared runtime values.
+  StateMgrStackName:
     Type: String
-    Default: "arn:aws:sqs:eu-central-1:186388857715:ita-uploaded-photos-pxuzz47kqx"
-    Description: ARN of uploaded photos SQS queue consumed by MS2.
-  FacesExtractionQueueArn:
-    Type: String
-    Default: "arn:aws:sqs:eu-central-1:186388857715:ita-faces-extraction-pxuzz47kqx"
-    Description: ARN of faces extraction SQS queue used by MS2 producer path.
-  FacesExtractionQueueUrl:
-    Type: String
-    Default: "https://sqs.eu-central-1.amazonaws.com/186388857715/ita-faces-extraction-pxuzz47kqx"
-    Description: URL of faces extraction SQS queue used by MS2 producer path.
-  Ms4InternalApiBaseUrl:
-    Type: String
-    Default: "https://90zby48wa9.execute-api.eu-central-1.amazonaws.com"
-    Description: Base URL for MS4 internal API.
+    Description: Stack name of the MS4 state manager deployment that exports its API endpoint.
 
 Globals:
   Function:
@@ -46,9 +52,15 @@ Resources:
       Handler: main.handler
       Environment:
         Variables:
-          PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
-          FACES_EXTRACTION_QUEUE_URL: !Ref FacesExtractionQueueUrl
-          MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+          # PROCESSING_BUCKET_NAME: !Ref ProcessingBucketName
+          PROCESSING_BUCKET_NAME: !ImportValue
+            Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
+          # FACES_EXTRACTION_QUEUE_URL: !Ref FacesExtractionQueueUrl
+          FACES_EXTRACTION_QUEUE_URL: !ImportValue
+            Fn::Sub: "${SharedInfraStackName}-FacesExtractionQueueUrl"
+          # MS4_INTERNAL_API_BASE_URL: !Ref Ms4InternalApiBaseUrl
+          MS4_INTERNAL_API_BASE_URL: !ImportValue
+            Fn::Sub: "${StateMgrStackName}-ApiEndpoint"
       Policies:
         - Statement:
             - Effect: Allow
@@ -56,27 +68,47 @@ Resources:
                 - sqs:ReceiveMessage
                 - sqs:DeleteMessage
                 - sqs:GetQueueAttributes
-              Resource: !Ref UploadedPhotosQueueArn
+              # Resource: !Ref UploadedPhotosQueueArn
+              Resource: !ImportValue
+                Fn::Sub: "${SharedInfraStackName}-UploadedPhotosQueueArn"
             - Effect: Allow
               Action:
                 - sqs:SendMessage
-              Resource: !Ref FacesExtractionQueueArn
+              # Resource: !Ref FacesExtractionQueueArn
+              Resource: !ImportValue
+                Fn::Sub: "${SharedInfraStackName}-FacesExtractionQueueArn"
             - Effect: Allow
               Action:
                 - s3:GetObject
-              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/uploaded/*"
+              # Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/uploaded/*"
+              Resource: !Sub
+                - "arn:aws:s3:::${ImportedProcessingBucketName}/uploaded/*"
+                - ImportedProcessingBucketName: !ImportValue
+                    Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
             - Effect: Allow
               Action:
                 - s3:PutObject
-              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/processed/*"
+              # Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/processed/*"
+              Resource: !Sub
+                - "arn:aws:s3:::${ImportedProcessingBucketName}/processed/*"
+                - ImportedProcessingBucketName: !ImportValue
+                    Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
             - Effect: Allow
               Action:
                 - s3:DeleteObject
-              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/uploaded/*"
+              # Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/uploaded/*"
+              Resource: !Sub
+                - "arn:aws:s3:::${ImportedProcessingBucketName}/uploaded/*"
+                - ImportedProcessingBucketName: !ImportValue
+                    Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
             - Effect: Allow
               Action:
                 - s3:PutObject
-              Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/rekognition/*"
+              # Resource: !Sub "arn:aws:s3:::${ProcessingBucketName}/rekognition/*"
+              Resource: !Sub
+                - "arn:aws:s3:::${ImportedProcessingBucketName}/rekognition/*"
+                - ImportedProcessingBucketName: !ImportValue
+                    Fn::Sub: "${SharedInfraStackName}-SharedProcessingBucketName"
             - Effect: Allow
               Action:
                 - rekognition:DetectFaces
@@ -89,7 +121,9 @@ Resources:
         UploadedPhotoQueue:
           Type: SQS
           Properties:
-            Queue: !Ref UploadedPhotosQueueArn
+            # Queue: !Ref UploadedPhotosQueueArn
+            Queue: !ImportValue
+              Fn::Sub: "${SharedInfraStackName}-UploadedPhotosQueueArn"
             BatchSize: 1
             MaximumBatchingWindowInSeconds: 0
 
