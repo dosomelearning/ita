@@ -4,10 +4,13 @@ Description: >-
   ita-ms4-statemgr state manager service.
 
 Parameters:
-  CloudFrontDomain:
+  # CloudFrontDomain:
+  #   Type: String
+  #   Default: "ita.dosomelearning.com"
+  #   Description: "CloudFront domain used for frontend-facing artifact URLs."
+  SharedInfraStackName:
     Type: String
-    Default: "ita.dosomelearning.com"
-    Description: "CloudFront domain used for frontend-facing artifact URLs."
+    Description: Stack name of the shared infra deployment that exports frontend/runtime values.
   PublicStatusThrottleRateLimit:
     Type: Number
     Default: 80
@@ -66,7 +69,9 @@ Resources:
         AllowOrigins:
           - http://localhost:5173
           - http://127.0.0.1:5173
-          - https://ita.dosomelearning.com
+          # - https://ita.dosomelearning.com
+          - !ImportValue
+              Fn::Sub: "${SharedInfraStackName}-SpaAllowedOrigin"
         AllowMethods:
           - GET
           - OPTIONS
@@ -135,7 +140,9 @@ Resources:
       Environment:
         Variables:
           STATE_TABLE_NAME: !Ref StateTable
-          CLOUDFRONT_DOMAIN: !Ref CloudFrontDomain
+          # CLOUDFRONT_DOMAIN: !Ref CloudFrontDomain
+          CLOUDFRONT_DOMAIN: !ImportValue
+            Fn::Sub: "${SharedInfraStackName}-AppDomainName"
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref StateTable
@@ -179,6 +186,8 @@ Outputs:
   ApiEndpoint:
     Description: API endpoint for ms4-statemgr.
     Value: !Sub "https://${StateMgrApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiEndpoint"
 
   FunctionArn:
     Description: Lambda ARN for ms4-statemgr.

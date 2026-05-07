@@ -273,22 +273,47 @@ Each write/read path should log:
 - Integration test: `MS4_API_BASE_URL=<api-url> ./scripts/run_integration_tests.sh`
 - Lint: `conda run -n conda_py_env_312 python -m ruff check src tests`
 - Run: `sam build --template-file template.yaml`
+- Deploy (`default` / original environment): `sam deploy --config-env default`
+- Deploy (`sandbox2` / additional environment): `sam deploy --config-env sandbox2`
+
+Deployment invocation note:
+
+- `sam deploy --config-env <env>` selects the matching section from `samconfig.toml`.
+- The AWS CLI profile is read from that section's `profile` field.
+- Current mapping:
+  - `default` -> profile `dev`
+  - `sandbox2` -> profile `sandbox2`
 
 ## Deployment Parameters
 
 `MS4` template parameters are configured in `b-ms4-statemgr/samconfig.toml` under:
 
 - `[default.deploy.parameters].parameter_overrides`
+- `[sandbox2.deploy.parameters].parameter_overrides`
 
 Current overrides include:
 
-- `CloudFrontDomain`
+- `SharedInfraStackName`
 - `PublicStatusThrottleRateLimit`
 - `PublicStatusThrottleBurstLimit`
 - `PublicParticipantUploadsThrottleRateLimit`
 - `PublicParticipantUploadsThrottleBurstLimit`
 - `PublicActivitiesThrottleRateLimit`
 - `PublicActivitiesThrottleBurstLimit`
+
+Shared values now expected via CloudFormation imports from `b-infra`:
+
+- `${SharedInfraStackName}-AppDomainName`
+- `${SharedInfraStackName}-SpaAllowedOrigin`
+
+Import/export model:
+
+- `MS4` no longer receives the frontend domain as a manually duplicated `CloudFrontDomain=...` value in `samconfig.toml`.
+- `MS4` imports shared frontend/runtime values from the owning `b-infra` stack using `SharedInfraStackName`.
+- This removes environment-specific hardcoding of frontend hostname/origin from the service deployment overrides.
+- `MS4` remains responsible for exporting its own service-owned API base URL for downstream consumers.
+
+`MS4` also exports its own API endpoint as `${AWS::StackName}-ApiEndpoint` for downstream service imports.
 
 ## Open Decisions
 

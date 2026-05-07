@@ -17,7 +17,29 @@ confirm_changeset = true
 resolve_s3 = true
 region = "eu-central-1"
 profile = "dev"
-parameter_overrides = "CloudFrontDomain=ita.dosomelearning.com"
+# parameter_overrides = "CloudFrontDomain=ita.dosomelearning.com"
+parameter_overrides = "SharedInfraStackName=ita-infra"
 
 [default.package.parameters]
+resolve_s3 = true
+
+[sandbox2.global.parameters]
+stack_name = "ita-ms4-statemgr-sandbox2"
+
+[sandbox2.build.parameters]
+cached = true
+parallel = true
+
+[sandbox2.validate.parameters]
+lint = true
+
+[sandbox2.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+region = "eu-central-1"
+profile = "sandbox2"
+parameter_overrides = "SharedInfraStackName=ita-infra-sandbox2"
+
+[sandbox2.package.parameters]
 resolve_s3 = true
